@@ -13,18 +13,29 @@ let auth = null;
 let initialized = false;
 
 export async function initialize() {
-  if (initialized) return { app, auth };
-
-  const res = await fetch('/config/config', { cache: 'no-store' });
-  if (!res.ok) {
-    const errorText = await res.text().catch(() => 'Unknown error');
-    throw new Error(`Failed to load firebase config from /config/config: ${errorText}`);
+  if (initialized) {
+    console.log('Firebase already initialized');
+    return { app, auth };
   }
-  const firebaseConfig = await res.json();
-  app = initializeApp(firebaseConfig);
-  auth = getAuth(app);
-  initialized = true;
-  return { app, auth };
+
+  try {
+    const res = await fetch('/config/config', { cache: 'no-store' });
+    if (!res.ok) {
+      const errorText = await res.text().catch(() => 'Unknown error');
+      throw new Error(`Failed to load firebase config from /config/config: ${errorText}`);
+    }
+    const firebaseConfig = await res.json();
+    
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    initialized = true;
+    
+    console.log('✅ Firebase app initialized:', app.name);
+    return { app, auth };
+  } catch (error) {
+    console.error('❌ Firebase initialization error:', error);
+    throw error;
+  }
 }
 
 export function onAuthStateChanged(cb) {

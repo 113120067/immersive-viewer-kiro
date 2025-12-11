@@ -7,14 +7,20 @@
 let currentUserId = null;
 
 /**
- * Initialize the vision uploader
+ * Initialize the vision uploader (async)
  */
-function initVisionUploader() {
-  console.log('Initializing Vision Uploader');
+async function initVisionUploader() {
+  console.log('🚀 Initializing Vision Uploader');
   
-  // Get user ID from Firebase Auth or session
-  // For now, we'll use a simple approach
-  currentUserId = getUserId();
+  try {
+    // Wait to get user ID (async)
+    currentUserId = await getUserId();
+    console.log('✅ Current User ID:', currentUserId);
+  } catch (error) {
+    console.error('❌ Failed to get user ID:', error);
+    // Use fallback ID
+    currentUserId = 'anonymous-' + Date.now();
+  }
   
   // Set up event listeners
   const fileInput = document.getElementById('imageInput');
@@ -23,34 +29,63 @@ function initVisionUploader() {
   
   if (fileInput) {
     fileInput.addEventListener('change', handleFileSelect);
+    console.log('✅ File input listener attached');
+  } else {
+    console.warn('⚠️ imageInput element not found');
   }
   
   if (analyzeBtn) {
     analyzeBtn.addEventListener('click', () => uploadAndAnalyze('analyze'));
+    console.log('✅ Analyze button listener attached');
+  } else {
+    console.warn('⚠️ analyzeBtn element not found');
   }
   
   if (ocrOnlyBtn) {
     ocrOnlyBtn.addEventListener('click', () => uploadAndAnalyze('ocr-only'));
+    console.log('✅ OCR only button listener attached');
+  } else {
+    console.warn('⚠️ ocrOnlyBtn element not found');
   }
   
   // Load recent analyses
-  loadRecentAnalyses();
+  await loadRecentAnalyses();
+  
+  console.log('✅ Vision Uploader initialized successfully');
 }
 
 /**
- * Get user ID (stub - integrate with Firebase Auth)
+ * Get user ID (async - waits for Firebase Auth)
  */
-function getUserId() {
-  // Try to get from Firebase Auth
-  if (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser) {
-    return firebase.auth().currentUser.uid;
+async function getUserId() {
+  try {
+    // Wait for Firebase initialization (if exists)
+    if (window.firebaseReady) {
+      console.log('⏳ Waiting for Firebase initialization...');
+      await window.firebaseReady;
+      console.log('✅ Firebase ready');
+    }
+    
+    // Try to get current user from Firebase Auth
+    if (window.firebaseAuth && window.firebaseAuth.currentUser) {
+      const uid = window.firebaseAuth.currentUser.uid;
+      console.log('👤 Using Firebase Auth user ID:', uid);
+      return uid;
+    } else {
+      console.log('👤 No Firebase user authenticated, using fallback');
+    }
+  } catch (error) {
+    console.warn('⚠️ Firebase Auth not available:', error.message);
   }
   
-  // Fallback: generate or retrieve from localStorage
+  // Fallback: use localStorage
   let userId = localStorage.getItem('visionUserId');
   if (!userId) {
-    userId = 'user-' + Date.now();
+    userId = 'user-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
     localStorage.setItem('visionUserId', userId);
+    console.log('🆔 Generated new user ID:', userId);
+  } else {
+    console.log('🆔 Using cached user ID:', userId);
   }
   return userId;
 }
@@ -347,9 +382,15 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
-// Initialize when DOM is ready
+// Initialize when DOM is ready (async)
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initVisionUploader);
+  document.addEventListener('DOMContentLoaded', () => {
+    initVisionUploader().catch(err => {
+      console.error('Failed to initialize Vision Uploader:', err);
+    });
+  });
 } else {
-  initVisionUploader();
+  initVisionUploader().catch(err => {
+    console.error('Failed to initialize Vision Uploader:', err);
+  });
 }
