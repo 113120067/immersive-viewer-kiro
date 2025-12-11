@@ -3,6 +3,9 @@ const router = express.Router();
 const { createMemoryUpload, handleMulterError } = require('../src/config/multer-config');
 const { extractTextFromBuffer, tokenizeText, FILE_FORMATS } = require('../src/utils/file-processor');
 const classroomStore = require('../src/utils/classroom-store');
+const classroomManager = require('../src/services/classroom-manager');
+const { verifyIdToken } = require('../src/middleware/auth-middleware');
+const firestoreService = require('../src/services/firestore-classroom-service');
 
 // Configure file upload
 const upload = createMemoryUpload(FILE_FORMATS.getVocabFormats());
@@ -24,7 +27,7 @@ router.get('/create', (req, res) => {
 /**
  * POST /classroom/create - Create classroom and upload words
  */
-router.post('/create', upload.single('file'), async (req, res) => {
+router.post('/create', verifyIdToken({ optional: true }), upload.single('file'), async (req, res) => {
   try {
     const { classroomName } = req.body;
     
@@ -44,14 +47,19 @@ router.post('/create', upload.single('file'), async (req, res) => {
       return res.status(400).json({ success: false, error: 'No words found in the file' });
     }
     
-    // Create classroom
-    const classroom = classroomStore.createClassroom(classroomName, words);
+    // Create classroom using manager (dual-mode)
+    const classroom = await classroomManager.createClassroom({
+      name: classroomName,
+      words,
+      user: req.user
+    });
     
     res.json({
       success: true,
       code: classroom.code,
       name: classroom.name,
-      wordCount: classroom.wordCount
+      wordCount: classroom.wordCount,
+      mode: classroom.source
     });
   } catch (error) {
     console.error('Error creating classroom:', error);
@@ -88,24 +96,24 @@ router.get('/join', (req, res) => {
 /**
  * POST /classroom/join - Student join classroom
  */
-router.post('/join', (req, res) => {
+router.post('/join', verifyIdToken({ optional: true }), async (req, res) => {
   const { code, studentName } = req.body;
   
   if (!code || !studentName) {
     return res.status(400).json({ success: false, error: 'Code and name are required' });
   }
   
-  const classroom = classroomStore.addStudent(code, studentName.trim());
+  const result = await classroomManager.joinClassroom({
+    code,
+    studentName: studentName.trim(),
+    user: req.user
+  });
   
-  if (!classroom) {
-    return res.status(404).json({ success: false, error: 'Classroom not found' });
+  if (!result.success) {
+    return res.status(404).json(result);
   }
   
-  res.json({
-    success: true,
-    code: code,
-    studentName: studentName.trim()
-  });
+  res.json(result);
 });
 
 /**
@@ -137,38 +145,46 @@ router.get('/student/:code/:name', (req, res) => {
 /**
  * POST /classroom/api/session/start - Start learning session
  */
-router.post('/api/session/start', (req, res) => {
+router.post('/api/session/start', verifyIdToken({ optional: true }), async (req, res) => {
   const { code, studentName } = req.body;
   
-  const success = classroomStore.startSession(code, studentName);
+  const result = await classroomManager.startSession({
+    code,
+    studentName,
+    user: req.user
+  });
   
-  if (!success) {
-    return res.status(400).json({ success: false, error: 'Failed to start session' });
+  if (!result.success) {
+    return res.status(400).json(result);
   }
   
-  res.json({ success: true });
+  res.json(result);
 });
 
 /**
  * POST /classroom/api/session/end - End learning session
  */
-router.post('/api/session/end', (req, res) => {
+router.post('/api/session/end', verifyIdToken({ optional: true }), async (req, res) => {
   const { code, studentName } = req.body;
   
-  const duration = classroomStore.endSession(code, studentName);
+  const result = await classroomManager.endSession({
+    code,
+    studentName,
+    user: req.user
+  });
   
-  if (duration === null) {
-    return res.status(400).json({ success: false, error: 'Failed to end session' });
+  if (!result.success) {
+    return res.status(400).json(result);
   }
   
-  res.json({ success: true, duration: duration });
+  res.json(result);
 });
 
 /**
  * GET /classroom/api/leaderboard/:code - Get classroom leaderboard
  */
-router.get('/api/leaderboard/:code', (req, res) => {
-  const leaderboard = classroomStore.getLeaderboard(req.params.code);
+router.get('/api/leaderboard/:code', verifyIdToken({ optional: true }), async (req, res) => {
+  const leaderboard = await classroomManager.getLeaderboard(req.params.code, req.user);
   
   if (!leaderboard) {
     return res.status(404).json({ success: false, error: 'Classroom not found' });
@@ -180,9 +196,13 @@ router.get('/api/leaderboard/:code', (req, res) => {
 /**
  * GET /classroom/api/status/:code/:name - Get student status
  */
-router.get('/api/status/:code/:name', (req, res) => {
+router.get('/api/status/:code/:name', verifyIdToken({ optional: true }), async (req, res) => {
   const { code, name } = req.params;
-  const status = classroomStore.getStudentStatus(code, decodeURIComponent(name));
+  const status = await classroomManager.getStudentStatus({
+    code,
+    studentName: decodeURIComponent(name),
+    user: req.user
+  });
   
   if (!status) {
     return res.status(404).json({ success: false, error: 'Student or classroom not found' });
@@ -195,18 +215,26 @@ router.get('/api/status/:code/:name', (req, res) => {
  * POST /classroom/api/word/swap - Swap words between students
  * body: { code, studentA, wordA, studentB, wordB }
  */
-router.post('/api/word/swap', (req, res) => {
+router.post('/api/word/swap', verifyIdToken({ optional: true }), async (req, res) => {
   const { code, studentA, wordA, studentB, wordB } = req.body;
   if (!code || !studentA || !studentB || !wordA || !wordB) {
     return res.status(400).json({ success: false, error: 'Missing parameters' });
   }
 
-  const result = classroomStore.swapWords(code, studentA, wordA, studentB, wordB);
+  const result = await classroomManager.swapWords({
+    code,
+    studentA,
+    wordA,
+    studentB,
+    wordB,
+    user: req.user
+  });
+  
   if (!result.success) {
-    return res.status(400).json({ success: false, error: result.error });
+    return res.status(400).json(result);
   }
 
-  res.json({ success: true });
+  res.json(result);
 });
 
 /**
@@ -270,18 +298,84 @@ router.get('/api/word/remove/list/:code', (req, res) => {
  * POST /classroom/api/word/practice - record a practice attempt
  * body: { code, studentName, word, correct }
  */
-router.post('/api/word/practice', (req, res) => {
+router.post('/api/word/practice', verifyIdToken({ optional: true }), async (req, res) => {
   const { code, studentName, word, correct } = req.body;
   if (!code || !studentName || !word || typeof correct === 'undefined') {
     return res.status(400).json({ success: false, error: 'Missing parameters' });
   }
 
-  const result = classroomStore.recordPracticeResult(code, studentName, word, !!correct);
+  const result = await classroomManager.recordPractice({
+    code,
+    studentName,
+    word,
+    correct: !!correct,
+    user: req.user
+  });
+  
   if (!result.success) {
-    return res.status(400).json({ success: false, error: result.error });
+    return res.status(400).json(result);
   }
 
-  res.json({ success: true, stats: result.stats });
+  res.json(result);
+});
+
+/**
+ * GET /classroom/my - My Classrooms page
+ */
+router.get('/my', (req, res) => {
+  res.render('classroom/my', { title: 'My Classrooms' });
+});
+
+/**
+ * GET /classroom/progress/:classroomId - Learning Progress page
+ */
+router.get('/progress/:classroomId', (req, res) => {
+  res.render('classroom/progress', { 
+    title: 'Learning Progress',
+    classroomId: req.params.classroomId 
+  });
+});
+
+/**
+ * GET /classroom/api/my-classrooms - Get user's owned classrooms
+ */
+router.get('/api/my-classrooms', verifyIdToken(), async (req, res) => {
+  try {
+    const classrooms = await firestoreService.getMyClassrooms(req.user.uid);
+    res.json({ success: true, classrooms });
+  } catch (error) {
+    console.error('Error fetching my classrooms:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * GET /classroom/api/my-participations - Get user's participated classrooms
+ */
+router.get('/api/my-participations', verifyIdToken(), async (req, res) => {
+  try {
+    const participations = await firestoreService.getMyParticipations(req.user.uid);
+    res.json({ success: true, participations });
+  } catch (error) {
+    console.error('Error fetching my participations:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * GET /classroom/api/progress/:classroomId - Get student progress
+ */
+router.get('/api/progress/:classroomId', verifyIdToken(), async (req, res) => {
+  try {
+    const progress = await firestoreService.getStudentProgress({
+      classroomId: req.params.classroomId,
+      userId: req.user.uid
+    });
+    res.json({ success: true, ...progress });
+  } catch (error) {
+    console.error('Error fetching progress:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
 });
 
 // Error handler

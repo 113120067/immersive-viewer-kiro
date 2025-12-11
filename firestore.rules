@@ -1,0 +1,49 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Classrooms collection
+    match /classrooms/{classroomId} {
+      // Allow read if classroom is public
+      allow read: if resource.data.isPublic == true;
+      
+      // Allow read if user is the owner
+      allow read: if request.auth != null && resource.data.ownerId == request.auth.uid;
+      
+      // Only authenticated users can create classrooms
+      allow create: if request.auth != null && 
+                       request.resource.data.ownerId == request.auth.uid;
+      
+      // Only owner can update or delete
+      allow update, delete: if request.auth != null && 
+                               resource.data.ownerId == request.auth.uid;
+      
+      // Students subcollection
+      match /students/{studentId} {
+        // Allow read if parent classroom is public
+        allow read: if get(/databases/$(database)/documents/classrooms/$(classroomId)).data.isPublic == true;
+        
+        // Allow anyone to create student record (join classroom)
+        allow create: if request.resource.data.name is string;
+        
+        // Allow update if user is the student or classroom owner
+        allow update: if request.auth != null && 
+                         (resource.data.userId == request.auth.uid || 
+                          request.auth.uid == get(/databases/$(database)/documents/classrooms/$(classroomId)).data.ownerId);
+        
+        // Only classroom owner can delete students
+        allow delete: if request.auth != null && 
+                         request.auth.uid == get(/databases/$(database)/documents/classrooms/$(classroomId)).data.ownerId;
+        
+        // Sessions subcollection
+        match /sessions/{sessionId} {
+          // Authenticated users can read their own sessions
+          allow read: if request.auth != null;
+          
+          // Authenticated users can create sessions
+          allow create: if request.auth != null;
+        }
+      }
+    }
+  }
+}

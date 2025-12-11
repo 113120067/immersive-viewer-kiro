@@ -7,6 +7,8 @@ block content
     div.create-classroom(style='max-width: 600px; margin: 50px auto;')
       h1.mb-4 👨‍🏫 建立課堂
       
+      div#authStatus.mb-3
+      
       div#step1.mb-4
         div.card
           div.card-body
@@ -41,8 +43,10 @@ block content
               p#classroomInfo 
               p.text-muted#wordCountInfo
             
+            div#storageMode
+            
             div.mt-4
               a#teacherPanelLink.btn.btn-success.btn-lg(href='#') 前往教師控制台 →
               a.btn.btn-outline-secondary.mt-2(href='/classroom/create') 建立另一個課堂
   
-  script(src='/js/classroom-create.js')
+  script(type='module', src='/js/classroom-create.js')

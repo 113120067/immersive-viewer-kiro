@@ -4,6 +4,7 @@ nav
   a(href='/upload') Upload | 
   a(href='/upload-vocab') Vocabulary | 
   a(href='/classroom') Classroom | 
+  a#nav-my-classrooms(href='/classroom/my', style='display:none;') My Classrooms | 
   a#nav-login(href='/login.html') Login
   a#nav-notes(href='/notes.html', style='display:none;margin-left:8px;') My Notes
 
@@ -15,12 +16,15 @@ nav
       onAuthStateChanged(user => {
         const loginEl = document.getElementById('nav-login');
         const notesEl = document.getElementById('nav-notes');
+        const myClassroomsEl = document.getElementById('nav-my-classrooms');
         if (user) {
           if (loginEl) loginEl.style.display = 'none';
           if (notesEl) notesEl.style.display = '';
+          if (myClassroomsEl) myClassroomsEl.style.display = '';
         } else {
           if (loginEl) loginEl.style.display = '';
           if (notesEl) notesEl.style.display = 'none';
+          if (myClassroomsEl) myClassroomsEl.style.display = 'none';
         }
       });
     })();

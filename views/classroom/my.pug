@@ -1,0 +1,39 @@
+extends ../layout
+
+block content
+  .container.mt-4
+    h1 我的課堂
+    
+    #notLoggedIn.alert.alert-warning(style='display:none;')
+      p 請先登入以查看您的課堂資料
+      a.btn.btn-primary(href='/login.html') 前往登入
+    
+    #userInfo.mb-4(style='display:none;')
+      .card
+        .card-body
+          h5.card-title 使用者資訊
+          p#userEmail.mb-0
+    
+    #teacherSection.mb-5(style='display:none;')
+      h2.mb-3
+        i.bi.bi-person-badge 我建立的課堂
+      #teacherClassrooms.row
+        // Teacher classrooms will be rendered here
+      #noTeacherClassrooms.alert.alert-info(style='display:none;')
+        p.mb-0 您還沒有建立任何課堂。
+          a(href='/classroom/create') 立即建立課堂
+    
+    #studentSection.mb-5(style='display:none;')
+      h2.mb-3
+        i.bi.bi-person 我參加的課堂
+      #studentClassrooms.row
+        // Student participations will be rendered here
+      #noStudentClassrooms.alert.alert-info(style='display:none;')
+        p.mb-0 您還沒有參加任何課堂。
+          a(href='/classroom/join') 立即加入課堂
+    
+    #loadingSpinner.text-center(style='display:none;')
+      .spinner-border(role='status')
+        span.visually-hidden Loading...
+  
+  script(type='module', src='/js/classroom-my.js')

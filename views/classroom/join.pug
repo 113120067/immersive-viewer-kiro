@@ -15,9 +15,8 @@ block content
               input#classroomCode.form-control.form-control-lg.text-center(
                 type='text', 
                 name='code', 
-                placeholder='請輸入4位數代碼', 
+                placeholder='請輸入4位代碼', 
                 maxlength='4',
-                pattern='[0-9]{4}',
                 style='font-size: 2em; letter-spacing: 10px; font-weight: bold;',
                 required
               )
@@ -41,14 +40,4 @@ block content
       div.text-center.mt-4
         a.btn.btn-link(href='/classroom') ← 返回首頁
   
-  script(src='/js/classroom-join.js')
-  
-  style.
-    #classroomCode::-webkit-outer-spin-button,
-    #classroomCode::-webkit-inner-spin-button {
-      -webkit-appearance: none;
-      margin: 0;
-    }
-    #classroomCode[type=number] {
-      -moz-appearance: textfield;
-    }
+  script(type='module', src='/js/classroom-join.js')

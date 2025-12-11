@@ -1,0 +1,74 @@
+extends ../layout
+
+block content
+  .container.mt-4
+    h1 學習進度
+    
+    #notLoggedIn.alert.alert-warning(style='display:none;')
+      p 請先登入以查看學習進度
+      a.btn.btn-primary(href='/login.html') 前往登入
+    
+    #progressContent(style='display:none;')
+      // Classroom Info Card
+      #classroomInfo.card.mb-4
+        .card-body
+          h3#classroomName Loading...
+          p
+            strong 課堂代碼: 
+            span#classroomCode.badge.bg-primary -
+          p
+            strong 單字總數: 
+            span#classroomWordCount -
+      
+      // Statistics Cards
+      .row.mb-4
+        .col-md-3.col-sm-6.mb-3
+          .card.text-center.bg-light
+            .card-body
+              h5.card-title 總學習時間
+              p#totalTime.display-6.text-primary 0 分鐘
+        
+        .col-md-3.col-sm-6.mb-3
+          .card.text-center.bg-light
+            .card-body
+              h5.card-title 班級排名
+              p#rank.display-6.text-success -
+        
+        .col-md-3.col-sm-6.mb-3
+          .card.text-center.bg-light
+            .card-body
+              h5.card-title 學習天數
+              p#studyDays.display-6.text-info 0 天
+        
+        .col-md-3.col-sm-6.mb-3
+          .card.text-center.bg-light
+            .card-body
+              h5.card-title 單字掌握度
+              p#mastery.display-6.text-warning 0%
+      
+      // Learning Chart
+      .card.mb-4
+        .card-body
+          h4 學習時間趨勢
+          canvas#learningChart(style='max-height: 300px;')
+      
+      // Word Statistics
+      .card.mb-4
+        .card-body
+          h4 單字統計
+          #wordStats
+            p.text-muted 載入中...
+      
+      // Session History
+      .card.mb-4
+        .card-body
+          h4 學習記錄
+          #sessionHistory
+            p.text-muted 載入中...
+    
+    #loadingSpinner.text-center(style='display:none;')
+      .spinner-border(role='status')
+        span.visually-hidden Loading...
+  
+  script(src='https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js')
+  script(type='module', src='/js/classroom-progress.js')
