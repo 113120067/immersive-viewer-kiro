@@ -204,3 +204,386 @@ router.use(handleMulterError);
 2. ⏳ 待重構現有路由使用共用模組
 3. ⏳ 新增單元測試
 4. ⏳ 建立 CI/CD 流程確保一致性
+
+---
+
+## 📚 課堂系統雙模式儲存架構
+
+### 架構概述
+
+課堂系統採用**雙模式儲存架構**，根據使用者登入狀態自動選擇儲存方式：
+
+```
+                        User Request
+                             |
+                             v
+                   ┌─────────────────┐
+                   │ Auth Middleware │
+                   │ (optional auth) │
+                   └─────────┬───────┘
+                             |
+                             v
+                   ┌─────────────────┐
+                   │ Classroom       │
+                   │ Manager         │
+                   └─────────┬───────┘
+                             |
+               ┌─────────────┴─────────────┐
+               |                           |
+               v                           v
+     ┌─────────────────┐       ┌─────────────────┐
+     │ Memory Store    │       │ Firestore       │
+     │ (Anonymous)     │       │ (Authenticated) │
+     └─────────────────┘       └─────────────────┘
+           |                           |
+           v                           v
+     24hr expiry              Permanent storage
+```
+
+---
+
+### 資料流程
+
+#### 未登入使用者（記憶體模式）
+1. 使用者訪問 `/classroom/create`
+2. `verifyIdToken({ optional: true })` 中介層設定 `req.user = null`
+3. `classroomManager.createClassroom()` 檢測到 `user === null`
+4. 呼叫 `classroomStore.createClassroom()` 儲存到記憶體
+5. 設定 24 小時自動刪除定時器
+6. 回傳 `{ source: 'memory' }` 標記
+
+#### 登入使用者（Firestore 模式）
+1. 使用者訪問 `/classroom/create` (已登入)
+2. `verifyIdToken({ optional: true })` 驗證 token，設定 `req.user = { uid, email }`
+3. `classroomManager.createClassroom()` 檢測到 `user !== null`
+4. 呼叫 `firestoreService.createClassroom()` 儲存到 Firestore
+5. 建立 classroom 文件，包含 `ownerId` 和 `ownerEmail`
+6. 回傳 `{ source: 'firestore' }` 標記
+
+---
+
+### 核心模組
+
+#### 1. Firebase Admin SDK 配置 (`src/config/firebase-admin.js`)
+
+**職責：**
+- 初始化 Firebase Admin SDK
+- 讀取環境變數 `FIREBASE_SERVICE_ACCOUNT`
+- 提供 `admin` 和 `db` 實例
+
+**容錯處理：**
+- 如果環境變數未設定，輸出警告但不中斷執行
+- 允許應用在未配置 Firestore 時仍可運作（記憶體模式）
+
+---
+
+#### 2. 認證中介層 (`src/middleware/auth-middleware.js`)
+
+**函數：** `verifyIdToken(options)`
+
+**參數：**
+- `optional` (boolean): 是否允許未登入請求通過
+
+**行為：**
+```javascript
+// optional = false (必須登入)
+// 無 token → 401 Unauthorized
+// 無效 token → 401 Unauthorized
+// 有效 token → req.user = { uid, email, emailVerified }
+
+// optional = true (選擇性登入)
+// 無 token → req.user = null, next()
+// 無效 token → req.user = null, next()
+// 有效 token → req.user = { uid, email, emailVerified }, next()
+```
+
+---
+
+#### 3. Firestore Classroom Service (`src/services/firestore-classroom-service.js`)
+
+**Firestore 資料結構：**
+
+```javascript
+// Collection: classrooms
+{
+  code: "ABC1",                    // 4位英數字（唯一）
+  name: "英文課",
+  words: ["apple", "banana"],
+  wordCount: 2,
+  ownerId: "firebase-uid",
+  ownerEmail: "teacher@example.com",
+  mode: "authenticated",
+  isPublic: true,
+  createdAt: Timestamp,
+  updatedAt: Timestamp,
+  expiresAt: null
+}
+
+// Subcollection: classrooms/{id}/students
+{
+  name: "小明",
+  userId: "firebase-uid" | null,  // 登入學生才有
+  email: "student@example.com" | null,
+  totalTime: 3600,                 // 秒
+  sessionStart: Timestamp | null,
+  lastActive: Timestamp,
+  words: ["apple"],                // 個人單字清單
+  wordStats: {
+    "apple": { correct: 5, wrong: 2 }
+  },
+  joinedAt: Timestamp
+}
+
+// Subcollection: classrooms/{id}/students/{sid}/sessions
+{
+  startTime: Timestamp,
+  endTime: Timestamp,
+  duration: 1800,                  // 秒
+  wordsStudied: ["apple", "banana"]
+}
+```
+
+**主要函數：**
+- `generateUniqueCode()` - 生成唯一 4 位代碼（最多嘗試 10 次）
+- `createClassroom({ name, words, ownerId, ownerEmail })` - 建立課堂
+- `getClassroomByCode(code)` / `getClassroomById(id)` - 查詢課堂
+- `addStudent({ classroomId, name, userId, email })` - 加入課堂
+- `startSession({ classroomId, studentName, userId })` - 開始會話
+- `endSession({ classroomId, studentName, userId })` - 結束會話（建立 session 記錄）
+- `getLeaderboard(classroomId)` - 取得排行榜（依 totalTime 降序）
+- `getMyClassrooms(ownerId)` - 取得使用者建立的課堂
+- `getMyParticipations(userId)` - 取得使用者參與的課堂（使用 collectionGroup）
+- `getStudentProgress({ classroomId, userId })` - 取得詳細進度
+
+---
+
+#### 4. Classroom Manager (`src/services/classroom-manager.js`)
+
+**職責：** 統一管理雙模式儲存，對外提供一致的 API
+
+**核心邏輯：**
+```javascript
+async createClassroom({ name, words, user }) {
+  if (user && db) {
+    // Firestore 模式
+    try {
+      return await firestoreService.createClassroom(...);
+    } catch (error) {
+      // 失敗時回退到記憶體模式
+      return classroomStore.createClassroom(...);
+    }
+  } else {
+    // 記憶體模式
+    return classroomStore.createClassroom(...);
+  }
+}
+```
+
+**所有方法都支援：**
+- 自動選擇儲存模式
+- 錯誤回退機制
+- 回傳統一格式資料（包含 `source` 標記）
+
+---
+
+### API 端點列表
+
+#### 公開端點（選擇性認證）
+
+| 方法 | 路徑 | 說明 | 認證 |
+|------|------|------|------|
+| POST | `/classroom/create` | 建立課堂 | Optional |
+| POST | `/classroom/join` | 加入課堂 | Optional |
+| POST | `/classroom/api/session/start` | 開始學習 | Optional |
+| POST | `/classroom/api/session/end` | 結束學習 | Optional |
+| GET | `/classroom/api/leaderboard/:code` | 排行榜 | Optional |
+| GET | `/classroom/api/status/:code/:name` | 學生狀態 | Optional |
+| POST | `/classroom/api/word/swap` | 單字交換 | Optional |
+| POST | `/classroom/api/word/practice` | 記錄練習 | Optional |
+
+#### 私有端點（需要認證）
+
+| 方法 | 路徑 | 說明 |
+|------|------|------|
+| GET | `/classroom/my` | 我的課堂頁面 |
+| GET | `/classroom/progress/:classroomId` | 學習進度頁面 |
+| GET | `/classroom/api/my-classrooms` | 查詢建立的課堂 |
+| GET | `/classroom/api/my-participations` | 查詢參與的課堂 |
+| GET | `/classroom/api/progress/:classroomId` | 取得學習進度 |
+
+---
+
+### 前端架構
+
+#### Classroom API Layer (`public/js/classroom-api.js`)
+
+**功能：**
+- 統一處理 Firebase 認證 token
+- 自動在 HTTP header 加入 `Authorization: Bearer <token>`
+- 提供所有課堂 API 的封裝函數
+
+**範例：**
+```javascript
+import { createClassroom, getMyClassrooms } from '/js/classroom-api.js';
+
+// 自動處理認證
+const result = await createClassroom(formData);
+const classrooms = await getMyClassrooms();
+```
+
+#### 我的課堂頁面 (`classroom-my.js`)
+
+**功能：**
+- 監聽 Firebase 登入狀態 (`onAuthStateChanged`)
+- 顯示兩個區塊：
+  1. **我建立的課堂**：呼叫 `getMyClassrooms()`
+  2. **我參加的課堂**：呼叫 `getMyParticipations()`
+- 渲染課堂卡片（代碼、名稱、統計、快速連結）
+
+#### 學習進度頁面 (`classroom-progress.js`)
+
+**功能：**
+- 載入課堂和學生資料
+- 使用 **Chart.js** 繪製學習時間趨勢圖
+- 顯示單字統計（進度條顯示正確率）
+- 渲染學習會話歷史記錄
+
+**統計卡片：**
+1. 總學習時間（分鐘）
+2. 班級排名（X / Y）
+3. 學習天數
+4. 單字掌握度（百分比）
+
+---
+
+### 安全性
+
+#### Firestore Security Rules
+
+**核心規則：**
+- **公開課堂**：任何人可讀取
+- **私人課堂**：只有擁有者可讀取
+- **建立課堂**：需要登入，且 `ownerId` 必須是當前使用者
+- **加入課堂**：任何人可建立學生記錄
+- **更新學生資料**：該學生本人或課堂擁有者
+- **刪除學生**：只有課堂擁有者
+
+#### Token 驗證流程
+
+```
+Client → Authorization: Bearer <token>
+  ↓
+auth-middleware.js
+  ↓
+admin.auth().verifyIdToken(token)
+  ↓
+Success: req.user = { uid, email }
+Failure: 401 或 req.user = null (optional mode)
+```
+
+---
+
+### 效能優化
+
+#### Firestore 索引
+
+1. **classrooms collection**:
+   - `(ownerId, createdAt DESC)` - 查詢使用者的課堂
+   - `(code)` - 快速代碼查詢
+
+2. **students collectionGroup**:
+   - `(userId, joinedAt DESC)` - 查詢使用者參與的課堂
+   - `(totalTime DESC)` - 排行榜排序
+
+3. **sessions subcollection**:
+   - `(startTime DESC)` - 會話歷史排序
+
+#### 快取策略
+
+- Firestore 自動啟用本地快取
+- 減少重複查詢
+- 使用 `limit()` 限制回傳筆數
+
+---
+
+### 向下相容
+
+**設計原則：**
+- 保留原有 `classroom-store.js` 不修改
+- 新功能透過 `classroom-manager.js` 包裝
+- 未設定 Firebase Admin 時不會中斷執行
+- 記憶體模式完全獨立運作
+
+**遷移路徑：**
+1. 未配置 Firebase：所有課堂使用記憶體模式
+2. 配置 Firebase Web：登入功能可用，但課堂仍在記憶體
+3. 配置 Firebase Admin：登入使用者的課堂永久保存
+
+---
+
+### 部署指南
+
+#### 1. 基本部署（僅記憶體模式）
+```bash
+npm install
+npm start
+```
+
+#### 2. 完整部署（含 Firestore）
+
+**步驟：**
+1. 設定 `.env` 檔案（參考 `.env.example`）
+2. 部署 Firestore 規則和索引：
+   ```bash
+   firebase deploy --only firestore
+   ```
+3. 重啟應用：
+   ```bash
+   npm start
+   ```
+
+#### 3. 驗證部署
+
+**檢查 Firebase Admin 初始化：**
+```bash
+# 啟動時應看到：
+[Firebase Admin] Successfully initialized
+```
+
+**檢查 Firestore 連線：**
+- 登入並建立課堂
+- 前往 Firebase Console > Firestore
+- 確認 `classrooms` collection 已建立
+
+---
+
+### 疑難排解
+
+#### Firebase Admin 無法初始化
+- 檢查 `FIREBASE_SERVICE_ACCOUNT` 環境變數
+- 確認 JSON 格式正確
+- 查看 console 錯誤訊息
+
+#### 課堂無法保存到 Firestore
+- 確認已部署 Firestore 規則
+- 檢查 Firebase Admin 是否成功初始化
+- 查看伺服器 console 錯誤訊息
+
+#### 索引錯誤
+```bash
+# 部署索引
+firebase deploy --only firestore:indexes
+
+# 或在 Firebase Console 手動建立索引
+# 錯誤訊息會包含建立索引的連結
+```
+
+---
+
+## 🔗 相關文件
+
+- [TESTING.md](./TESTING.md) - 測試指南
+- [ReadMe.md](./ReadMe.md) - 使用說明
+- [firestore.rules](./firestore.rules) - 安全規則
+- [firestore.indexes.json](./firestore.indexes.json) - 索引配置
+

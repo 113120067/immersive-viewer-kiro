@@ -9,22 +9,116 @@
 
 1. Open a command prompt (Windows) or terminal (OSX, Linux)
 
-1. Navigate to the **immersive-reader-sdk/js/samples/quickstart-nodejs** directory
+1. Navigate to the project directory
 
-1. Run `yarn install`
+1. Run `npm install`
 
-1. Create a file called **.env** and add the following, supplying values as appropriate.
+1. Create a file called **.env** and add the following, supplying values as appropriate (see `.env.example` for all options).
 
     ```text
+    # Azure Immersive Reader
     TENANT_ID={YOUR_TENANT_ID}
     CLIENT_ID={YOUR_CLIENT_ID}
     CLIENT_SECRET={YOUR_CLIENT_SECRET}
     SUBDOMAIN={YOUR_SUBDOMAIN}
+    
+    # Firebase Web Config (Required for authentication)
+    FIREBASE_API_KEY={YOUR_API_KEY}
+    FIREBASE_AUTH_DOMAIN={YOUR_AUTH_DOMAIN}
+    FIREBASE_PROJECT_ID={YOUR_PROJECT_ID}
+    FIREBASE_APP_ID={YOUR_APP_ID}
+    
+    # Firebase Admin SDK (Optional, for persistent storage)
+    FIREBASE_SERVICE_ACCOUNT='{"type":"service_account",...}'
+    # OR
+    # FIREBASE_SERVICE_ACCOUNT=/path/to/serviceAccountKey.json
     ```
 
 1. Run `npm start` (or `nodemon start` if you want to view changes you make after doing a browser refresh)
 
 1. Open a web browser and navigate to [http://localhost:3000](http://localhost:3000) to view the sample
+
+## Classroom Feature - Dual-Mode Storage
+
+The application includes a powerful classroom management system with **dual-mode storage**:
+- **Anonymous Mode**: Temporary classrooms stored in memory (24-hour expiry) - no login required
+- **Authenticated Mode**: Permanent classrooms stored in Firestore - requires Firebase authentication
+
+### Features
+
+#### For Teachers
+- **Create Classrooms**: Upload vocabulary files to create classrooms with unique codes
+- **Monitor Progress**: View real-time student leaderboards and statistics
+- **My Classrooms Dashboard**: Manage all your classrooms in one place
+
+#### For Students
+- **Easy Join**: Join classrooms using 4-character codes
+- **Track Progress**: View detailed learning statistics and progress charts
+- **Leaderboard**: Compete with classmates on learning time
+
+### Firebase Setup (Optional - for permanent storage)
+
+1. **Create a Firebase Project**:
+   - Go to [Firebase Console](https://console.firebase.google.com/)
+   - Create a new project
+
+2. **Enable Authentication**:
+   - In Firebase Console, go to Authentication > Sign-in method
+   - Enable Google and/or Email/Password authentication
+
+3. **Get Web Config**:
+   - Go to Project Settings > General
+   - Scroll to "Your apps" and add a web app
+   - Copy the config values to your `.env` file
+
+4. **Enable Firestore**:
+   - In Firebase Console, go to Firestore Database
+   - Click "Create database"
+   - Choose production mode
+   - Select a location
+
+5. **Set up Admin SDK**:
+   - Go to Project Settings > Service Accounts
+   - Click "Generate new private key"
+   - Download the JSON file
+   - Set `FIREBASE_SERVICE_ACCOUNT` in `.env` to either:
+     - The JSON file path: `/path/to/serviceAccountKey.json`
+     - Or the entire JSON as a string (escaped)
+
+6. **Deploy Security Rules and Indexes**:
+   ```bash
+   # Install Firebase CLI
+   npm install -g firebase-tools
+   
+   # Login to Firebase
+   firebase login
+   
+   # Initialize Firebase (select Firestore only)
+   firebase init firestore
+   
+   # Deploy rules and indexes
+   firebase deploy --only firestore
+   ```
+
+### Using the Classroom System
+
+#### Without Login (Temporary Mode)
+1. Go to [http://localhost:3000/classroom/create](http://localhost:3000/classroom/create)
+2. Upload a vocabulary file and create a classroom
+3. Share the 4-digit code with students
+4. **Note**: Classroom will be deleted after 24 hours or when server restarts
+
+#### With Login (Permanent Mode)
+1. Go to [http://localhost:3000/login.html](http://localhost:3000/login.html) and sign in
+2. Create classrooms - they will be permanently saved
+3. Access "My Classrooms" from the navigation bar to:
+   - View all classrooms you created
+   - See classrooms you joined as a student
+   - Check detailed learning progress with charts
+
+### API Endpoints
+
+See `ARCHITECTURE.md` for complete API documentation.
 
 ## Upload and Save Vocabulary Feature
 
