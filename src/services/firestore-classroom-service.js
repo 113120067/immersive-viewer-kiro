@@ -13,14 +13,17 @@ const admin = require('firebase-admin');
 async function generateUniqueCode() {
   if (!db) throw new Error('Firestore is not initialized');
 
+  const crypto = require('crypto');
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   let attempts = 0;
   const maxAttempts = 10;
 
   while (attempts < maxAttempts) {
     let code = '';
+    // Use crypto.randomBytes for cryptographically secure random generation
+    const randomBytes = crypto.randomBytes(4);
     for (let i = 0; i < 4; i++) {
-      code += chars.charAt(Math.floor(Math.random() * chars.length));
+      code += chars.charAt(randomBytes[i] % chars.length);
     }
 
     // Check if code already exists

@@ -367,8 +367,18 @@ router.get('/api/my-participations', verifyIdToken(), async (req, res) => {
  */
 router.get('/api/progress/:classroomId', verifyIdToken(), async (req, res) => {
   try {
+    const classroomId = req.params.classroomId;
+    
+    // Validate classroomId format (Firestore document IDs are alphanumeric with some special chars)
+    if (!classroomId || !/^[a-zA-Z0-9_-]{1,100}$/.test(classroomId)) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Invalid classroom ID format' 
+      });
+    }
+    
     const progress = await firestoreService.getStudentProgress({
-      classroomId: req.params.classroomId,
+      classroomId,
       userId: req.user.uid
     });
     res.json({ success: true, ...progress });

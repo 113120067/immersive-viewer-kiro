@@ -215,15 +215,18 @@ function renderWordStats() {
     const total = stats.correct + stats.wrong;
     const accuracy = total > 0 ? Math.round((stats.correct / total) * 100) : 0;
     
+    // Validate accuracy is a number between 0-100
+    const safeAccuracy = Math.max(0, Math.min(100, isNaN(accuracy) ? 0 : accuracy));
+    
     let badgeClass = 'bg-success';
-    if (accuracy < 50) badgeClass = 'bg-danger';
-    else if (accuracy < 80) badgeClass = 'bg-warning';
+    if (safeAccuracy < 50) badgeClass = 'bg-danger';
+    else if (safeAccuracy < 80) badgeClass = 'bg-warning';
     
     html += `
       <div class="list-group-item">
         <div class="d-flex justify-content-between align-items-center mb-2">
           <strong>${escapeHtml(word)}</strong>
-          <span class="badge ${badgeClass}">${accuracy}%</span>
+          <span class="badge ${badgeClass}">${safeAccuracy}%</span>
         </div>
         <div class="progress" style="height: 20px;">
           <div class="progress-bar bg-success" role="progressbar" 

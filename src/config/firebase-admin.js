@@ -30,8 +30,13 @@ function initializeFirebaseAdmin() {
 
     // Try to parse as JSON string first
     if (serviceAccount.trim().startsWith('{')) {
-      const serviceAccountObj = JSON.parse(serviceAccount);
-      credential = admin.credential.cert(serviceAccountObj);
+      try {
+        const serviceAccountObj = JSON.parse(serviceAccount);
+        credential = admin.credential.cert(serviceAccountObj);
+      } catch (parseError) {
+        console.error('[Firebase Admin] Failed to parse service account JSON:', parseError.message);
+        throw new Error('Invalid service account JSON format');
+      }
     } else {
       // Treat as file path
       credential = admin.credential.cert(serviceAccount);
