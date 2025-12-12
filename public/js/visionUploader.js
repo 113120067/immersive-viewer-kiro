@@ -5,6 +5,7 @@
 
 // State management
 let currentUserId = null;
+let lastPreviewDataUrl = null;
 
 /**
  * Initialize the vision uploader (async)
@@ -132,6 +133,8 @@ function handleFileSelect(event) {
         <img src="${e.target.result}" alt="Preview" style="max-width: 100%; max-height: 300px; border-radius: 8px;">
         <p class="mt-2"><strong>${file.name}</strong> (${(file.size / 1024).toFixed(2)} KB)</p>
       `;
+      // Save the data URL so server responses can reference it when no public URL is returned
+      lastPreviewDataUrl = e.target.result;
     }
   };
   reader.readAsDataURL(file);
@@ -197,11 +200,12 @@ function displayResults(data, endpoint) {
   let html = '<div class="card"><div class="card-body">';
   
   // Image URL
-  if (data.imageUrl) {
+  const imgSrc = data.imageUrl || lastPreviewDataUrl;
+  if (imgSrc) {
     html += `
       <div class="mb-3">
         <h5>Analyzed Image</h5>
-        <img src="${data.imageUrl}" alt="Analyzed" style="max-width: 100%; max-height: 300px; border-radius: 8px;">
+        <img src="${imgSrc}" alt="Analyzed" style="max-width: 100%; max-height: 300px; border-radius: 8px;">
       </div>
     `;
   }

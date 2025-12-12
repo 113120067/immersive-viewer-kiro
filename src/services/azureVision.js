@@ -5,6 +5,7 @@
 
 const { ComputerVisionClient } = require('@azure/cognitiveservices-computervision');
 const { ApiKeyCredentials } = require('@azure/ms-rest-azure-js');
+const Stream = require('stream');
 
 // Configuration constants
 const MAX_RETRIES = 10;
@@ -123,6 +124,85 @@ async function extractText(imageUrl) {
 }
 
 /**
+ * Extract text from image buffer using Azure Read API
+ * @param {Buffer} buffer - Image buffer
+ * @param {string} contentType - MIME type of the image (optional)
+ * @returns {Promise<Object>} - Extracted text and metadata
+ */
+async function extractTextFromBuffer(buffer, contentType) {
+  const client = initializeVisionClient();
+  if (!client) {
+    throw new Error('Azure Computer Vision client not initialized');
+  }
+
+  try {
+    console.log('🔍 Starting OCR (buffer)');
+
+    const readStream = new Stream.PassThrough();
+    readStream.end(buffer);
+
+    // Start the read operation from stream
+    const readResult = await client.readInStream(readStream, { language: 'zh-Hant' });
+
+    // Get operation ID from the operation location URL
+    const operationId = readResult.operationLocation.split('/').slice(-1)[0];
+
+    // Poll for the result
+    let result;
+    let status;
+    let retryCount = 0;
+
+    while (retryCount < MAX_RETRIES) {
+      result = await client.getReadResult(operationId);
+      status = result.status;
+
+      if (status === 'succeeded') {
+        break;
+      } else if (status === 'failed') {
+        throw new Error('OCR operation failed');
+      }
+
+      await new Promise(resolve => setTimeout(resolve, POLLING_INTERVAL_MS));
+      retryCount++;
+    }
+
+    if (status !== 'succeeded') {
+      throw new Error('OCR operation timed out');
+    }
+
+    const pages = result.analyzeResult.readResults;
+    const allText = [];
+    const allLines = [];
+
+    for (const page of pages) {
+      for (const line of page.lines) {
+        allText.push(line.text);
+        allLines.push({
+          text: line.text,
+          boundingBox: line.boundingBox,
+          words: line.words.map(word => ({
+            text: word.text,
+            boundingBox: word.boundingBox,
+            confidence: word.confidence
+          }))
+        });
+      }
+    }
+
+    console.log('✅ OCR (buffer) completed, extracted', allLines.length, 'lines');
+
+    return {
+      text: allText.join('\n'),
+      lines: allLines,
+      language: result.analyzeResult.readResults[0]?.language || 'unknown'
+    };
+  } catch (error) {
+    console.error('❌ OCR (buffer) error:', error.message);
+    throw new Error('Failed to extract text: ' + error.message);
+  }
+}
+
+/**
  * Analyze image for tags, description, objects, and colors
  * @param {string} imageUrl - Public URL of the image
  * @returns {Promise<Object>} - Analysis results
@@ -176,6 +256,62 @@ async function analyzeImage(imageUrl) {
 }
 
 /**
+ * Analyze image from buffer using Azure analyzeImageInStream
+ * @param {Buffer} buffer - Image buffer
+ * @param {string} contentType - MIME type (optional)
+ * @returns {Promise<Object>} - Analysis results
+ */
+async function analyzeImageFromBuffer(buffer, contentType) {
+  const client = initializeVisionClient();
+  if (!client) {
+    throw new Error('Azure Computer Vision client not initialized');
+  }
+
+  try {
+    console.log('🔍 Starting image analysis (buffer)');
+
+    const readStream = new Stream.PassThrough();
+    readStream.end(buffer);
+
+    const analysis = await client.analyzeImageInStream(readStream, {
+      visualFeatures: ['Tags', 'Description', 'Objects', 'Color', 'Categories']
+    });
+
+    console.log('✅ Image analysis (buffer) completed');
+
+    return {
+      tags: analysis.tags.map(tag => ({
+        name: tag.name,
+        confidence: tag.confidence
+      })),
+      description: {
+        captions: analysis.description.captions.map(caption => ({
+          text: caption.text,
+          confidence: caption.confidence
+        })),
+        tags: analysis.description.tags
+      },
+      objects: analysis.objects.map(obj => ({
+        name: obj.object,
+        confidence: obj.confidence,
+        boundingBox: obj.rectangle
+      })),
+      categories: analysis.categories.map(cat => ({
+        name: cat.name,
+        score: cat.score
+      })),
+      colors: {
+        dominant: analysis.color.dominantColors,
+        accent: analysis.color.accentColor
+      }
+    };
+  } catch (error) {
+    console.error('❌ Image analysis (buffer) error:', error.message);
+    throw new Error('Failed to analyze image: ' + error.message);
+  }
+}
+
+/**
  * Perform complete analysis: OCR + Image Analysis
  * Runs both operations in parallel for better performance
  * @param {string} imageUrl - Public URL of the image
@@ -208,10 +344,45 @@ async function completeAnalysis(imageUrl) {
   }
 }
 
+/**
+ * Perform complete analysis from a buffer (OCR + Image Analysis)
+ * @param {Buffer} buffer - Image buffer
+ * @param {string} contentType - MIME type (optional)
+ * @returns {Promise<Object>} - Combined analysis results
+ */
+async function completeAnalysisFromBuffer(buffer, contentType) {
+  const client = initializeVisionClient();
+  if (!client) {
+    throw new Error('Azure Computer Vision client not initialized');
+  }
+
+  try {
+    console.log('🔍 Starting complete analysis (buffer)');
+
+    const [ocrResult, analysisResult] = await Promise.all([
+      extractTextFromBuffer(buffer, contentType),
+      analyzeImageFromBuffer(buffer, contentType)
+    ]);
+
+    console.log('✅ Complete analysis (buffer) finished');
+
+    return {
+      ocr: ocrResult,
+      analysis: analysisResult
+    };
+  } catch (error) {
+    console.error('❌ Complete analysis (buffer) error:', error.message);
+    throw new Error('Failed to perform complete analysis: ' + error.message);
+  }
+}
+
 module.exports = {
   initializeVisionClient,
   extractText,
   analyzeImage,
   completeAnalysis,
+  extractTextFromBuffer,
+  analyzeImageFromBuffer,
+  completeAnalysisFromBuffer,
   isInitialized: () => initialized
 };
