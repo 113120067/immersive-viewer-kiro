@@ -11,7 +11,7 @@ const router = express.Router();
  */
 router.get('/', (req, res) => {
   res.render('kids-vocabulary', { 
-    title: '小學生英文單字圖片生成器'
+    title: '小學生英文學習圖片生成器 - 免費無需登入'
   });
 });
 

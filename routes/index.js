@@ -3,9 +3,9 @@ var express = require('express');
 var router = express.Router();
 var qs = require('qs');
 
-/* GET home page. */
+/* GET home page - redirect to Kids Vocabulary */
 router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Express' });
+  res.redirect('/kids-vocabulary');
 });
 
 router.get('/GetTokenAndSubdomain', function(req, res) {

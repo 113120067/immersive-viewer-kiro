@@ -13,10 +13,11 @@ block content
           
           .card-body.p-4
             // 歡迎訊息
-            .alert.alert-info.text-center.mb-4#welcomeMessage
+            .alert.alert-success.text-center.mb-4#welcomeMessage
               h5 
                 | 👋 歡迎小朋友！
-              p.mb-0 輸入英文單字或句子，我會幫你畫一張可愛的圖片來學習！
+              p.mb-2 輸入英文單字或句子，我會幫你畫一張可愛的圖片來學習！
+              p.mb-0.small.text-muted ✨ 完全免費使用，無需註冊登入
             
             // 簡單輸入表單
             form#simpleVocabForm
@@ -40,19 +41,34 @@ block content
               
               // 發音功能設定
               .row.mt-3
-                .col-md-6
+                .col-md-4
                   .form-check.form-switch
                     input#pronunciationToggle.form-check-input(type="checkbox" checked)
                     label.form-check-label(for="pronunciationToggle")
                       | 🔊 自動發音
                       small.text-muted.d-block 生成圖片後自動播放單字發音
                 
-                .col-md-6
+                .col-md-4
                   .form-check.form-switch
                     input#practiceToggle.form-check-input(type="checkbox")
                     label.form-check-label(for="practiceToggle")
                       | 🎤 練習發音
                       small.text-muted.d-block 開啟語音識別練習功能
+                
+                .col-md-4
+                  label.form-label.small(for="speechSpeedSlider")
+                    | 🎵 播放速度
+                    span#speedValue.text-muted.ms-1 (正常)
+                  input#speechSpeedSlider.form-range(
+                    type="range" 
+                    min="0.5" 
+                    max="2.0" 
+                    step="0.1" 
+                    value="0.8"
+                  )
+                  .d-flex.justify-content-between.small.text-muted
+                    span 慢
+                    span 快
               
               // 隱藏的進階選項（預設為小學生友善設置）
               input#providerSelect(type="hidden" value="pollinations")
@@ -210,9 +226,43 @@ block content
       background: #e9ecef;
       transform: translateY(-2px);
     }
+    
+    #speechSpeedSlider {
+      background: linear-gradient(to right, #28a745 0%, #20c997 50%, #17a2b8 100%);
+      height: 8px;
+      border-radius: 5px;
+      outline: none;
+      opacity: 0.8;
+      transition: opacity 0.2s;
+    }
+    
+    #speechSpeedSlider:hover {
+      opacity: 1;
+    }
+    
+    #speechSpeedSlider::-webkit-slider-thumb {
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #28a745;
+      cursor: pointer;
+      border: 2px solid white;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    #speechSpeedSlider::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #28a745;
+      cursor: pointer;
+      border: 2px solid white;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
 
 block scripts
-  script(src="/js/kids-vocabulary.js" type="module")
+  script(src="/js/kids-vocabulary.js")
   script.
     // 頁面載入動畫
     document.addEventListener('DOMContentLoaded', function() {

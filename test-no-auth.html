@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kids Vocabulary 無需登入測試</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-input {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            border: 2px solid #28a745;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .test-button {
+            background: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            background: #f8f9fa;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .image-preview {
+            max-width: 300px;
+            border: 2px solid #28a745;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🌟 Kids Vocabulary 無需登入測試</h1>
+    
+    <div class="test-section">
+        <h2>🎯 功能測試</h2>
+        <p>測試 Kids Vocabulary 是否可以在不登入的情況下正常工作</p>
+        
+        <div>
+            <label>輸入單字或句子：</label>
+            <input type="text" id="testInput" class="test-input" placeholder="例如：apple, I am happy..." value="apple">
+            <button class="test-button" onclick="testImageGeneration()">生成圖片</button>
+            <div id="testResult" class="result"></div>
+            <img id="testImage" class="image-preview" style="display: none;">
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔗 Pollinations URL 測試</h2>
+        <p>測試直接生成 Pollinations 圖片 URL</p>
+        
+        <div>
+            <button class="test-button" onclick="testUrlGeneration()">測試 URL 生成</button>
+            <div id="urlResult" class="result"></div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>📝 範例測試</h2>
+        <p>測試各種類型的輸入</p>
+        
+        <div>
+            <button class="test-button" onclick="testExamples()">測試範例</button>
+            <div id="exampleResult" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        // 模擬 Kids Vocabulary 的核心函數
+        function generateKidsPrompt(input) {
+            const wordCount = input.trim().split(/\s+/).length;
+            if (wordCount === 1) {
+                return `cute cartoon ${input}`;
+            } else {
+                return `cute cartoon illustration of "${input}" for kids, colorful, simple, educational`;
+            }
+        }
+
+        function generatePollinationsUrl(input) {
+            const prompt = generateKidsPrompt(input);
+            const encodedPrompt = encodeURIComponent(prompt);
+            return `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&model=flux&enhance=true`;
+        }
+
+        function testImageGeneration() {
+            const input = document.getElementById('testInput').value.trim();
+            const resultDiv = document.getElementById('testResult');
+            const imageElement = document.getElementById('testImage');
+            
+            if (!input) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = '❌ 請輸入內容';
+                return;
+            }
+            
+            try {
+                const imageUrl = generatePollinationsUrl(input);
+                
+                resultDiv.className = 'result success';
+                resultDiv.innerHTML = `
+                    ✅ 圖片 URL 生成成功！<br>
+                    <strong>輸入：</strong>${input}<br>
+                    <strong>提示詞：</strong>${generateKidsPrompt(input)}<br>
+                    <strong>URL：</strong><a href="${imageUrl}" target="_blank">查看圖片</a>
+                `;
+                
+                // 顯示圖片預覽
+                imageElement.src = imageUrl;
+                imageElement.style.display = 'block';
+                imageElement.onload = () => {
+                    resultDiv.innerHTML += '<br>🎨 圖片載入成功！';
+                };
+                imageElement.onerror = () => {
+                    resultDiv.innerHTML += '<br>⚠️ 圖片載入中，請稍候...';
+                };
+                
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `❌ 錯誤：${error.message}`;
+            }
+        }
+
+        function testUrlGeneration() {
+            const testCases = [
+                'apple',
+                'dog',
+                'I am happy',
+                'good morning',
+                'The cat is sleeping'
+            ];
+            
+            let html = '<h4>URL 生成結果：</h4>';
+            testCases.forEach(input => {
+                const url = generatePollinationsUrl(input);
+                html += `
+                    <div style="margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                        <strong>${input}</strong><br>
+                        <small><a href="${url}" target="_blank">${url}</a></small>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('urlResult').innerHTML = html;
+        }
+
+        function testExamples() {
+            const examples = [
+                { input: 'apple', type: '單字' },
+                { input: 'happy cat', type: '短語' },
+                { input: 'I love my family', type: '句子' },
+                { input: 'good morning teacher', type: '問候語' },
+                { input: 'The sun is shining', type: '描述句' }
+            ];
+            
+            let html = '<h4>範例測試結果：</h4>';
+            examples.forEach(example => {
+                const prompt = generateKidsPrompt(example.input);
+                const url = generatePollinationsUrl(example.input);
+                html += `
+                    <div style="margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                        <strong>${example.type}：</strong>${example.input}<br>
+                        <strong>提示詞：</strong>${prompt}<br>
+                        <small><a href="${url}" target="_blank">查看圖片</a></small>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('exampleResult').innerHTML = html;
+        }
+
+        // 頁面載入時自動測試
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🌟 Kids Vocabulary 無需登入測試頁面載入完成');
+        });
+    </script>
+</body>
+</html>

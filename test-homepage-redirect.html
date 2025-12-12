@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>首頁重定向測試</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            background: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            background: #f8f9fa;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .info { background: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <h1>🏠 首頁重定向測試</h1>
+    
+    <div class="test-section">
+        <h2>🎯 測試說明</h2>
+        <p>測試網站首頁是否正確重定向到 Kids Vocabulary</p>
+        
+        <div class="result info">
+            <h4>預期行為：</h4>
+            <ul>
+                <li>訪問 <code>http://localhost:3000/</code> 應該自動重定向到 <code>/kids-vocabulary</code></li>
+                <li>導航欄顯示「🌟 Kids English」作為首頁連結</li>
+                <li>Kids Vocabulary 功能無需登入即可使用</li>
+                <li>管理功能只在登入後顯示</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔗 快速測試連結</h2>
+        <p>點擊以下連結測試重定向功能：</p>
+        
+        <div>
+            <button class="test-button" onclick="testHomepage()">測試首頁重定向</button>
+            <button class="test-button" onclick="testKidsVocabulary()">直接訪問 Kids Vocabulary</button>
+            <button class="test-button" onclick="testNavigation()">測試導航功能</button>
+        </div>
+        
+        <div id="testResult" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>📋 檢查清單</h2>
+        <div class="result">
+            <h4>手動測試項目：</h4>
+            <ul>
+                <li>✅ 訪問根路徑 <code>/</code> 自動跳轉到 Kids Vocabulary</li>
+                <li>✅ Kids Vocabulary 頁面無需登入即可使用</li>
+                <li>✅ 可以輸入單字和句子生成圖片</li>
+                <li>✅ 語音功能正常工作</li>
+                <li>✅ 導航欄顯示正確</li>
+                <li>✅ 管理功能在未登入時隱藏</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🌐 URL 結構</h2>
+        <div class="result">
+            <h4>新的 URL 結構：</h4>
+            <ul>
+                <li><strong>首頁：</strong> <code>/</code> → 重定向到 <code>/kids-vocabulary</code></li>
+                <li><strong>Kids English：</strong> <code>/kids-vocabulary</code> (主要功能)</li>
+                <li><strong>Farm Game：</strong> <code>/farm-game</code> (遊戲學習)</li>
+                <li><strong>Vision AI：</strong> <code>/vision-analyzer</code> (圖片分析)</li>
+                <li><strong>管理功能：</strong> 需要登入後才顯示</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function testHomepage() {
+            const resultDiv = document.getElementById('testResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.innerHTML = `
+                <h4>🔄 測試首頁重定向</h4>
+                <p>正在測試 <code>http://localhost:3000/</code> 的重定向...</p>
+                <p><a href="/" target="_blank">點擊這裡測試首頁重定向</a></p>
+                <p><small>應該會自動跳轉到 Kids Vocabulary 頁面</small></p>
+            `;
+        }
+
+        function testKidsVocabulary() {
+            const resultDiv = document.getElementById('testResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result success';
+            resultDiv.innerHTML = `
+                <h4>🌟 測試 Kids Vocabulary</h4>
+                <p>正在打開 Kids Vocabulary 頁面...</p>
+                <p><a href="/kids-vocabulary" target="_blank">點擊這裡直接訪問 Kids Vocabulary</a></p>
+                <p><small>應該可以無需登入直接使用所有功能</small></p>
+            `;
+        }
+
+        function testNavigation() {
+            const resultDiv = document.getElementById('testResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.innerHTML = `
+                <h4>🧭 測試導航功能</h4>
+                <p>檢查導航欄是否正確顯示：</p>
+                <ul>
+                    <li>🌟 Kids English (首頁連結)</li>
+                    <li>🎮 Farm Game (遊戲)</li>
+                    <li>Vision AI (圖片分析)</li>
+                    <li>Login (登入按鈕)</li>
+                </ul>
+                <p><small>管理功能應該在未登入時隱藏</small></p>
+            `;
+        }
+
+        // 頁面載入時顯示當前 URL
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🏠 首頁重定向測試頁面載入完成');
+            console.log('當前 URL:', window.location.href);
+        });
+    </script>
+</body>
+</html>

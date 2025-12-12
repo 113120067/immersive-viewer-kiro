@@ -1,15 +1,14 @@
 nav
-  a(href='/') Home | 
-  a(href='/options') Options | 
-  a(href='/upload') Upload | 
-  a(href='/upload-vocab') Vocabulary | 
-  a(href='/classroom') Classroom | 
+  a(href='/') 🌟 Kids English | 
   a(href='/farm-game') 🎮 Farm Game | 
   a(href='/vision-analyzer') Vision AI | 
   a#nav-image-generator(href='/image-generator', style='display:none;') 🎨 AI Images | 
   a#nav-vocabulary-generator(href='/vocabulary-generator', style='display:none;') 📚 Vocabulary | 
-  a#nav-kids-vocabulary(href='/kids-vocabulary', style='display:none;') 🌟 Kids Words | 
   a#nav-usage-stats(href='/usage-stats', style='display:none;') 📊 Usage Stats | 
+  a#nav-options(href='/options', style='display:none;') Options | 
+  a#nav-upload(href='/upload', style='display:none;') Upload | 
+  a#nav-upload-vocab(href='/upload-vocab', style='display:none;') Vocabulary | 
+  a#nav-classroom(href='/classroom', style='display:none;') Classroom | 
   a#nav-my-classrooms(href='/classroom/my', style='display:none;') My Classrooms | 
   a#nav-login(href='/login.html') Login
   a#nav-notes(href='/notes.html', style='display:none;margin-left:8px;') My Notes
@@ -25,24 +24,36 @@ nav
         const myClassroomsEl = document.getElementById('nav-my-classrooms');
         const imageGeneratorEl = document.getElementById('nav-image-generator');
         const vocabularyGeneratorEl = document.getElementById('nav-vocabulary-generator');
-        const kidsVocabularyEl = document.getElementById('nav-kids-vocabulary');
         const usageStatsEl = document.getElementById('nav-usage-stats');
+        const optionsEl = document.getElementById('nav-options');
+        const uploadEl = document.getElementById('nav-upload');
+        const uploadVocabEl = document.getElementById('nav-upload-vocab');
+        const classroomEl = document.getElementById('nav-classroom');
+        
         if (user) {
+          // 登入後顯示管理功能
           if (loginEl) loginEl.style.display = 'none';
           if (notesEl) notesEl.style.display = '';
           if (myClassroomsEl) myClassroomsEl.style.display = '';
           if (imageGeneratorEl) imageGeneratorEl.style.display = '';
           if (vocabularyGeneratorEl) vocabularyGeneratorEl.style.display = '';
-          if (kidsVocabularyEl) kidsVocabularyEl.style.display = '';
           if (usageStatsEl) usageStatsEl.style.display = '';
+          if (optionsEl) optionsEl.style.display = '';
+          if (uploadEl) uploadEl.style.display = '';
+          if (uploadVocabEl) uploadVocabEl.style.display = '';
+          if (classroomEl) classroomEl.style.display = '';
         } else {
+          // 未登入時隱藏管理功能
           if (loginEl) loginEl.style.display = '';
           if (notesEl) notesEl.style.display = 'none';
           if (myClassroomsEl) myClassroomsEl.style.display = 'none';
           if (imageGeneratorEl) imageGeneratorEl.style.display = 'none';
           if (vocabularyGeneratorEl) vocabularyGeneratorEl.style.display = 'none';
-          if (kidsVocabularyEl) kidsVocabularyEl.style.display = 'none';
           if (usageStatsEl) usageStatsEl.style.display = 'none';
+          if (optionsEl) optionsEl.style.display = 'none';
+          if (uploadEl) uploadEl.style.display = 'none';
+          if (uploadVocabEl) uploadVocabEl.style.display = 'none';
+          if (classroomEl) classroomEl.style.display = 'none';
         }
       });
     })();

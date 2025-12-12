@@ -1,14 +1,12 @@
 /**
  * Kids Vocabulary Generator
  * 專為小學生設計的簡化英文單字圖片生成器
+ * 無需登入，直接使用免費 AI 服務
  */
-
-import { initialize, onAuthStateChanged } from '/firebase-client.js';
 
 class KidsVocabularyGenerator {
   constructor() {
     this.isGenerating = false;
-    this.currentUser = null;
     this.recentWords = JSON.parse(localStorage.getItem('kidsRecentWords') || '[]');
     this.currentWord = '';
     this.speechSynthesis = window.speechSynthesis;
@@ -23,21 +21,13 @@ class KidsVocabularyGenerator {
    */
   async init() {
     try {
-      await initialize();
-      
-      onAuthStateChanged(user => {
-        this.currentUser = user;
-        if (!user) {
-          // 對小學生顯示友善的登入提示
-          this.showLoginPrompt();
-          return;
-        }
-        
-        this.loadRecentWords();
-      });
-      
+      // 直接載入功能，無需認證
+      this.loadRecentWords();
       this.setupEventListeners();
-    this.initializeSpeechFeatures();
+      this.initializeSpeechFeatures();
+      
+      // 顯示歡迎訊息
+      this.showWelcomeMessage();
       
     } catch (error) {
       console.error('Initialization failed:', error);
@@ -46,17 +36,17 @@ class KidsVocabularyGenerator {
   }
 
   /**
-   * 顯示登入提示
+   * 顯示歡迎訊息
    */
-  showLoginPrompt() {
+  showWelcomeMessage() {
     const welcomeMessage = document.getElementById('welcomeMessage');
     if (welcomeMessage) {
       welcomeMessage.innerHTML = `
-        <h5>🔐 需要登入</h5>
-        <p class="mb-2">小朋友，請先請老師或家長幫你登入！</p>
-        <a href="/login.html" class="btn btn-primary btn-sm">前往登入</a>
+        <h5>👋 歡迎小朋友！</h5>
+        <p class="mb-2">輸入英文單字或句子，我會幫你畫一張可愛的圖片來學習！</p>
+        <p class="mb-0 small text-muted">✨ 完全免費使用，無需註冊登入</p>
       `;
-      welcomeMessage.className = 'alert alert-warning text-center mb-4';
+      welcomeMessage.className = 'alert alert-success text-center mb-4';
     }
   }
 
@@ -168,6 +158,13 @@ class KidsVocabularyGenerator {
       }
     });
     
+    // 語音速度滑桿
+    const speechSpeedSlider = document.getElementById('speechSpeedSlider');
+    speechSpeedSlider.addEventListener('input', () => {
+      this.updateSpeedDisplay();
+      localStorage.setItem('kidsSpeechSpeed', speechSpeedSlider.value);
+    });
+    
     // 載入保存的設定
     this.loadSpeechSettings();
   }
@@ -203,28 +200,15 @@ class KidsVocabularyGenerator {
       this.hideError();
       this.hideResult();
 
-      // 生成適合小學生的提示詞
-      const prompt = this.generateKidsPrompt(input);
-
-      const token = await this.getAuthToken();
+      // 直接使用 Pollinations 免費服務，無需後端 API
+      const imageUrl = this.generatePollinationsUrl(input);
       
-      const response = await fetch('/image-generator/generate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          prompt: prompt,
-          provider: 'pollinations', // 使用免費的 Pollinations 服務
-          width: 1024,
-          height: 1024,
-          model: 'flux',
-          enhance: true
-        })
-      });
-
-      const data = await response.json();
+      // 模擬 API 響應格式
+      const data = {
+        success: true,
+        imageUrl: imageUrl,
+        provider: 'pollinations'
+      };
 
       if (data.success) {
         this.showResult(data, input);
@@ -256,6 +240,15 @@ class KidsVocabularyGenerator {
       // 句子：生成場景圖片
       return `cute cartoon illustration of "${input}" for kids, colorful, simple, educational`;
     }
+  }
+
+  /**
+   * 直接生成 Pollinations 圖片 URL
+   */
+  generatePollinationsUrl(input) {
+    const prompt = this.generateKidsPrompt(input);
+    const encodedPrompt = encodeURIComponent(prompt);
+    return `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&model=flux&enhance=true`;
   }
 
   /**
@@ -645,6 +638,7 @@ class KidsVocabularyGenerator {
   loadSpeechSettings() {
     const pronunciationEnabled = localStorage.getItem('kidsPronunciationEnabled');
     const practiceEnabled = localStorage.getItem('kidsPracticeEnabled');
+    const speechSpeed = localStorage.getItem('kidsSpeechSpeed');
     
     if (pronunciationEnabled !== null) {
       document.getElementById('pronunciationToggle').checked = pronunciationEnabled === 'true';
@@ -655,6 +649,37 @@ class KidsVocabularyGenerator {
       // 觸發 change 事件來更新 UI
       document.getElementById('practiceToggle').dispatchEvent(new Event('change'));
     }
+    
+    if (speechSpeed !== null) {
+      document.getElementById('speechSpeedSlider').value = speechSpeed;
+    }
+    
+    // 更新速度顯示
+    this.updateSpeedDisplay();
+  }
+
+  /**
+   * 更新速度顯示
+   */
+  updateSpeedDisplay() {
+    const slider = document.getElementById('speechSpeedSlider');
+    const speedValue = document.getElementById('speedValue');
+    const speed = parseFloat(slider.value);
+    
+    let speedText = '';
+    if (speed <= 0.6) {
+      speedText = '(很慢)';
+    } else if (speed <= 0.8) {
+      speedText = '(慢)';
+    } else if (speed <= 1.0) {
+      speedText = '(正常)';
+    } else if (speed <= 1.3) {
+      speedText = '(快)';
+    } else {
+      speedText = '(很快)';
+    }
+    
+    speedValue.textContent = speedText;
   }
 
   /**
@@ -686,17 +711,12 @@ class KidsVocabularyGenerator {
     const utterance = new SpeechSynthesisUtterance(input);
     utterance.lang = 'en-US';
     
-    // 根據內容類型調整語音參數
-    const wordCount = input.trim().split(/\s+/).length;
-    if (wordCount === 1) {
-      // 單字：較慢語速，適合學習
-      utterance.rate = 0.8;
-      utterance.pitch = 1.1;
-    } else {
-      // 句子：正常語速，自然語調
-      utterance.rate = 0.9;
-      utterance.pitch = 1.0;
-    }
+    // 使用用戶設定的語音速度
+    const speedSlider = document.getElementById('speechSpeedSlider');
+    const userSpeed = speedSlider ? parseFloat(speedSlider.value) : 0.8;
+    
+    utterance.rate = userSpeed;
+    utterance.pitch = 1.1; // 保持清晰的音調
     utterance.volume = 0.8;
     
     // 選擇最佳語音
@@ -946,15 +966,7 @@ class KidsVocabularyGenerator {
     }
   }
 
-  /**
-   * 獲取認證 Token
-   */
-  async getAuthToken() {
-    if (!this.currentUser) {
-      throw new Error('User not authenticated');
-    }
-    return await this.currentUser.getIdToken();
-  }
+
 }
 
 // 初始化
@@ -965,5 +977,3 @@ document.addEventListener('DOMContentLoaded', () => {
   // 全域函數供 HTML 調用
   window.kidsVocabGenerator = kidsVocabGenerator;
 });
-
-export default KidsVocabularyGenerator;
