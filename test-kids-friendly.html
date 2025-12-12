@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>兒童友善響應式測試</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            border: 3px solid #28a745;
+        }
+        
+        .device-demo {
+            border: 4px solid #333;
+            border-radius: 20px;
+            margin: 20px auto;
+            overflow: hidden;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+            background: #000;
+        }
+        
+        .phone-demo {
+            width: 375px;
+            height: 667px;
+            max-width: 90vw;
+            max-height: 70vh;
+        }
+        
+        .tablet-demo {
+            width: 768px;
+            height: 600px;
+            max-width: 90vw;
+            max-height: 70vh;
+        }
+        
+        .desktop-demo {
+            width: 1200px;
+            height: 700px;
+            max-width: 95vw;
+            max-height: 80vh;
+        }
+        
+        .demo-frame {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+        }
+        
+        .device-label {
+            text-align: center;
+            font-weight: bold;
+            font-size: 18px;
+            margin: 15px 0;
+            padding: 8px 20px;
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            border-radius: 25px;
+            display: inline-block;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        }
+        
+        .feature-card {
+            background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+            border: 2px solid #28a745;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 15px 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .feature-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .feature-list li::before {
+            content: "✅";
+            margin-right: 10px;
+            font-size: 18px;
+        }
+        
+        .test-button {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            padding: 15px 25px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 8px;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+            transition: all 0.3s ease;
+            min-height: 50px;
+        }
+        
+        .test-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+        }
+        
+        .size-info {
+            background: #e3f2fd;
+            border: 2px solid #2196f3;
+            border-radius: 12px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        
+        .highlight {
+            background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        @media (max-width: 575.98px) {
+            .test-section {
+                margin: 10px;
+                padding: 15px;
+                border-radius: 12px;
+            }
+            
+            .test-button {
+                width: 100%;
+                margin: 5px 0;
+                font-size: 18px;
+                padding: 18px 20px;
+                min-height: 56px;
+            }
+            
+            .device-label {
+                font-size: 16px;
+                padding: 10px 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <h1 class="text-center my-4" style="color: #28a745; font-weight: bold; font-size: 2.5rem;">
+            👶 Kids Vocabulary 兒童友善測試
+        </h1>
+        
+        <div class="test-section">
+            <h2 style="color: #28a745;">🎯 兒童友善設計特色</h2>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <h5 style="color: #28a745;">📱 手機版 (小朋友最愛)</h5>
+                        <ul class="feature-list">
+                            <li>超大字體 (20px)</li>
+                            <li>大型按鈕 (56px 高)</li>
+                            <li>粗邊框設計</li>
+                            <li>觸控友善間距</li>
+                            <li>彩色視覺效果</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <h5 style="color: #28a745;">📟 平板版 (家庭共用)</h5>
+                        <ul class="feature-list">
+                            <li>適中字體 (19px)</li>
+                            <li>平衡按鈕 (52px 高)</li>
+                            <li>雙欄布局</li>
+                            <li>橫向縱向適應</li>
+                            <li>清晰圖示</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <h5 style="color: #28a745;">🖥️ 桌面版 (學校使用)</h5>
+                        <ul class="feature-list">
+                            <li>標準字體 (18px)</li>
+                            <li>完整功能</li>
+                            <li>多欄布局</li>
+                            <li>滑鼠懸停效果</li>
+                            <li>專業外觀</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2 style="color: #28a745;">🧪 設備測試工具</h2>
+            <p style="font-size: 18px;">點擊按鈕測試不同設備上的兒童友善設計：</p>
+            <div class="text-center">
+                <button class="test-button" onclick="showDevice('phone')">
+                    📱 手機測試 (375px)
+                </button>
+                <button class="test-button" onclick="showDevice('tablet')">
+                    📟 平板測試 (768px)
+                </button>
+                <button class="test-button" onclick="showDevice('desktop')">
+                    🖥️ 桌面測試 (1200px)
+                </button>
+                <button class="test-button" onclick="showAll()">
+                    👁️ 全部顯示
+                </button>
+                <button class="test-button" onclick="openKidsVocab()">
+                    🚀 直接測試
+                </button>
+            </div>
+            
+            <div class="highlight">
+                <h5>💡 測試重點：</h5>
+                <p>• 小朋友能否輕鬆點擊所有按鈕？<br>
+                • 文字是否夠大、夠清楚？<br>
+                • 顏色是否吸引且不刺眼？<br>
+                • 操作是否簡單直觀？</p>
+            </div>
+        </div>
+
+        <!-- 手機演示 -->
+        <div id="phoneDemo" class="device-demo phone-demo" style="display: none;">
+            <div class="text-center">
+                <span class="device-label">📱 iPhone (375x667) - 小朋友最常用</span>
+            </div>
+            <iframe class="demo-frame" src="/kids-vocabulary"></iframe>
+        </div>
+
+        <!-- 平板演示 -->
+        <div id="tabletDemo" class="device-demo tablet-demo" style="display: none;">
+            <div class="text-center">
+                <span class="device-label">📟 iPad (768x600) - 家庭共用設備</span>
+            </div>
+            <iframe class="demo-frame" src="/kids-vocabulary"></iframe>
+        </div>
+
+        <!-- 桌面演示 -->
+        <div id="desktopDemo" class="device-demo desktop-demo" style="display: none;">
+            <div class="text-center">
+                <span class="device-label">🖥️ Desktop (1200x700) - 學校電腦</span>
+            </div>
+            <iframe class="demo-frame" src="/kids-vocabulary"></iframe>
+        </div>
+
+        <div class="test-section">
+            <h2 style="color: #28a745;">📏 響應式斷點說明</h2>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="size-info">
+                        <h6>📱 手機版斷點：</h6>
+                        <code>@media (max-width: 575.98px)</code>
+                        <ul style="margin-top: 10px;">
+                            <li>字體：16-20px (基礎加大)</li>
+                            <li>按鈕：56px 高 (觸控友善)</li>
+                            <li>邊框：3-4px (清晰可見)</li>
+                            <li>間距：12-16px (寬鬆舒適)</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="size-info">
+                        <h6>📟 平板版斷點：</h6>
+                        <code>@media (576px - 991.98px)</code>
+                        <ul style="margin-top: 10px;">
+                            <li>字體：15-19px (平衡設計)</li>
+                            <li>按鈕：44-52px 高 (適中)</li>
+                            <li>邊框：2-3px (清晰)</li>
+                            <li>間距：10-14px (適中)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2 style="color: #28a745;">🎨 兒童友善設計原則</h2>
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="feature-card text-center">
+                        <h4>🔤</h4>
+                        <h6>大字體</h6>
+                        <p>手機版使用 20px 大字體，確保小朋友能清楚閱讀</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="feature-card text-center">
+                        <h4>👆</h4>
+                        <h6>大按鈕</h6>
+                        <p>最小 56px 高度，符合兒童手指觸控需求</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="feature-card text-center">
+                        <h4>🌈</h4>
+                        <h6>亮色彩</h6>
+                        <p>使用鮮豔但不刺眼的顏色，吸引兒童注意</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="feature-card text-center">
+                        <h4>🎯</h4>
+                        <h6>簡操作</h6>
+                        <p>簡化操作流程，減少認知負擔</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2 style="color: #28a745;">✅ 測試檢查清單</h2>
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>📱 手機版檢查：</h5>
+                    <ul class="feature-list">
+                        <li>文字是否夠大 (≥20px)</li>
+                        <li>按鈕是否好按 (≥56px)</li>
+                        <li>顏色是否鮮豔</li>
+                        <li>間距是否足夠</li>
+                        <li>滑桿是否好操作</li>
+                        <li>圖片是否清晰</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h5>📟 平板版檢查：</h5>
+                    <ul class="feature-list">
+                        <li>橫向模式是否正常</li>
+                        <li>縱向模式是否正常</li>
+                        <li>雙欄布局是否美觀</li>
+                        <li>觸控是否靈敏</li>
+                        <li>字體是否適中</li>
+                        <li>功能是否完整</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showDevice(device) {
+            // 隱藏所有演示
+            document.getElementById('phoneDemo').style.display = 'none';
+            document.getElementById('tabletDemo').style.display = 'none';
+            document.getElementById('desktopDemo').style.display = 'none';
+            
+            // 顯示指定演示
+            const demoId = device + 'Demo';
+            document.getElementById(demoId).style.display = 'block';
+            
+            // 滾動到演示位置
+            document.getElementById(demoId).scrollIntoView({ 
+                behavior: 'smooth',
+                block: 'center'
+            });
+        }
+        
+        function showAll() {
+            document.getElementById('phoneDemo').style.display = 'block';
+            document.getElementById('tabletDemo').style.display = 'block';
+            document.getElementById('desktopDemo').style.display = 'block';
+        }
+        
+        function openKidsVocab() {
+            window.open('/kids-vocabulary', '_blank');
+        }
+        
+        // 檢測當前設備類型
+        function detectDevice() {
+            const width = window.innerWidth;
+            let deviceType = '';
+            let fontSize = '';
+            
+            if (width < 576) {
+                deviceType = '📱 手機';
+                fontSize = '20px (兒童友善)';
+            } else if (width < 992) {
+                deviceType = '📟 平板';
+                fontSize = '19px (平衡設計)';
+            } else {
+                deviceType = '🖥️ 桌面';
+                fontSize = '18px (標準)';
+            }
+            
+            return { deviceType, fontSize, width };
+        }
+        
+        // 頁面載入時顯示設備資訊
+        document.addEventListener('DOMContentLoaded', function() {
+            const device = detectDevice();
+            console.log(`🎯 當前設備: ${device.deviceType}`);
+            console.log(`📏 螢幕寬度: ${device.width}px`);
+            console.log(`🔤 建議字體: ${device.fontSize}`);
+            
+            // 在頁面上顯示當前設備資訊
+            const deviceInfo = document.createElement('div');
+            deviceInfo.className = 'alert alert-info text-center';
+            deviceInfo.innerHTML = `
+                <h5>📱 當前設備檢測</h5>
+                <p><strong>設備類型:</strong> ${device.deviceType}<br>
+                <strong>螢幕寬度:</strong> ${device.width}px<br>
+                <strong>建議字體:</strong> ${device.fontSize}</p>
+            `;
+            
+            document.body.insertBefore(deviceInfo, document.body.firstChild);
+        });
+        
+        // 監聽螢幕尺寸變化
+        window.addEventListener('resize', function() {
+            const device = detectDevice();
+            console.log(`📱 設備變更: ${device.deviceType} (${device.width}px)`);
+        });
+    </script>
+</body>
+</html>
