@@ -1,0 +1,183 @@
+/**
+ * Farm Game MVP Styles
+ */
+
+/* 農場網格樣式 */
+.farm-grid {
+  background: linear-gradient(135deg, #e8f5e8 0%, #f0f8f0 100%);
+  padding: 20px;
+  border-radius: 10px;
+  border: 2px solid #28a745;
+}
+
+.farm-plot {
+  background: #8B4513;
+  border: 3px solid #654321;
+  border-radius: 8px;
+  padding: 15px;
+  text-align: center;
+  min-height: 120px;
+  position: relative;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.farm-plot:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.plot-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.plot-status {
+  font-weight: bold;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.plant-btn, .harvest-btn {
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+/* 語音控制區域 */
+.voice-control {
+  animation: pulse-border 2s infinite;
+}
+
+@keyframes pulse-border {
+  0% { border-color: #007bff; }
+  50% { border-color: #28a745; }
+  100% { border-color: #007bff; }
+}
+
+.voice-control .card-body {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+#startListening {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  border: none;
+  box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+  transition: all 0.3s ease;
+}
+
+#startListening:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(40, 167, 69, 0.4);
+}
+
+#startListening:disabled {
+  background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+  animation: listening-pulse 1.5s infinite;
+}
+
+@keyframes listening-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+#stopListening {
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  border: none;
+  box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+/* 學習面板 */
+.vocabulary-section .vocab-item {
+  transition: transform 0.3s ease;
+}
+
+.vocabulary-section .vocab-item:hover {
+  transform: scale(1.05);
+}
+
+.play-word {
+  transition: all 0.3s ease;
+}
+
+.play-word:hover {
+  background-color: #007bff;
+  color: white;
+  transform: scale(1.1);
+}
+
+/* 進度條動畫 */
+.progress-bar {
+  transition: width 0.8s ease-in-out;
+}
+
+/* 遊戲狀態指示器 */
+.alert {
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* 響應式設計 */
+@media (max-width: 768px) {
+  .farm-plot {
+    min-height: 100px;
+    padding: 10px;
+  }
+  
+  .voice-control .btn-lg {
+    font-size: 14px;
+    padding: 8px 16px;
+  }
+  
+  .farm-grid {
+    padding: 15px;
+  }
+}
+
+/* 動畫效果 */
+.fade-in {
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 成功/錯誤提示 */
+.success-flash {
+  animation: successFlash 0.6s ease-in-out;
+}
+
+.error-flash {
+  animation: errorFlash 0.6s ease-in-out;
+}
+
+@keyframes successFlash {
+  0%, 100% { background-color: transparent; }
+  50% { background-color: rgba(40, 167, 69, 0.3); }
+}
+
+@keyframes errorFlash {
+  0%, 100% { background-color: transparent; }
+  50% { background-color: rgba(220, 53, 69, 0.3); }
+}
+
+/* 載入動畫 */
+.loading-spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

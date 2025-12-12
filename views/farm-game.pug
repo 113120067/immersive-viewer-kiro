@@ -1,0 +1,109 @@
+extends layout
+
+block content
+  .container-fluid.mt-4
+    .row
+      .col-md-8
+        // 農場主區域
+        .card
+          .card-header.bg-success.text-white
+            h4.mb-0 🌱 Smart Farm - English Learning Game
+          .card-body
+            // 遊戲狀態顯示
+            .row.mb-3
+              .col-md-6
+                .alert.alert-info
+                  strong 💰 Gold: 
+                  span#goldAmount 100
+              .col-md-6
+                .alert.alert-warning
+                  strong 🎯 Current Task: 
+                  span#currentTask Plant the carrot
+            
+            // 農場網格
+            .farm-grid.mb-4
+              h5 🚜 Your Farm
+              .row
+                each i in [1,2,3,4]
+                  .col-3.mb-2
+                    .farm-plot(data-plot=i)
+                      .plot-content
+                        .plot-status Empty
+                        button.btn.btn-outline-success.btn-sm.plant-btn(data-plot=i) 🌱 Plant
+                        button.btn.btn-outline-warning.btn-sm.harvest-btn(data-plot=i, style="display:none") 🌾 Harvest
+            
+            // 語音控制區域
+            .voice-control.mt-4
+              .card.border-primary
+                .card-header.bg-primary.text-white
+                  h5.mb-0 🎤 Voice Commands
+                .card-body
+                  .row
+                    .col-md-6
+                      button#startListening.btn.btn-success.btn-lg.w-100
+                        i.fas.fa-microphone
+                        |  Start Listening
+                    .col-md-6
+                      button#stopListening.btn.btn-danger.btn-lg.w-100(disabled)
+                        i.fas.fa-stop
+                        |  Stop Listening
+                  
+                  .mt-3
+                    .alert.alert-light
+                      strong 🗣️ Say: 
+                      span#expectedCommand "Plant the carrot"
+                    
+                    .mt-2
+                      strong 👂 You said: 
+                      span#recognizedText ...
+                    
+                    .mt-2
+                      strong 📊 Score: 
+                      span#pronunciationScore --
+      
+      .col-md-4
+        // 學習面板
+        .card
+          .card-header.bg-info.text-white
+            h5.mb-0 📚 Learning Panel
+          .card-body
+            // 當前詞彙
+            .vocabulary-section.mb-4
+              h6 🔤 Current Vocabulary
+              .vocab-item.mb-2
+                .card.border-success
+                  .card-body.text-center
+                    h4 🥕 Carrot
+                    p.text-muted /ˈkær.ət/
+                    button.btn.btn-sm.btn-outline-primary.play-word(data-word="carrot")
+                      i.fas.fa-volume-up
+                      |  Listen
+            
+            // 任務進度
+            .progress-section.mb-4
+              h6 📈 Task Progress
+              .progress.mb-2
+                .progress-bar.bg-success(style="width: 0%" id="taskProgress")
+              small.text-muted Complete the carrot planting task
+            
+            // 學習提示
+            .tips-section
+              h6 💡 Learning Tips
+              .alert.alert-light.small
+                ul.mb-0
+                  li Speak clearly and slowly
+                  li Listen to the instruction first
+                  li Try to match the pronunciation
+                  li Don't worry about mistakes!
+
+  // 音頻元素
+  audio#instructionAudio(preload="auto")
+  audio#feedbackAudio(preload="auto")
+
+block scripts
+  script(src="/js/farm-game.js" type="module")
+  script.
+    // 初始化遊戲
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('🎮 Farm Game MVP loaded');
+    });

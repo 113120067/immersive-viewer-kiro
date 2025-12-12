@@ -50,4 +50,9 @@ router.get('/vision-analyzer', function(req, res, next) {
   res.render('vision-analyzer', { title: 'Azure Computer Vision Analyzer' });
 });
 
+/* GET farm-game MVP page */
+router.get('/farm-game', function(req, res, next) {
+  res.render('farm-game', { title: 'Smart Farm - English Learning Game MVP' });
+});
+
 module.exports = router;
