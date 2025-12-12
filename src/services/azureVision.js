@@ -4,7 +4,7 @@
  */
 
 const { ComputerVisionClient } = require('@azure/cognitiveservices-computervision');
-const { ApiKeyCredentials } = require('@azure/ms-rest-azure-js');
+const { CognitiveServicesCredentials } = require('@azure/ms-rest-azure-js');
 const Stream = require('stream');
 
 // Configuration constants
@@ -33,7 +33,7 @@ function initializeVisionClient() {
   }
 
   try {
-    const credentials = new ApiKeyCredentials({ inHeader: { 'Ocp-Apim-Subscription-Key': key } });
+    const credentials = new CognitiveServicesCredentials(key);
     visionClient = new ComputerVisionClient(credentials, endpoint);
     initialized = true;
     console.log('✅ Azure Computer Vision client initialized successfully');
@@ -138,11 +138,8 @@ async function extractTextFromBuffer(buffer, contentType) {
   try {
     console.log('🔍 Starting OCR (buffer)');
 
-    const readStream = new Stream.PassThrough();
-    readStream.end(buffer);
-
-    // Start the read operation from stream
-    const readResult = await client.readInStream(readStream, { language: 'zh-Hant' });
+    // Start the read operation from buffer
+    const readResult = await client.readInStream(buffer, { language: 'zh-Hant' });
 
     // Get operation ID from the operation location URL
     const operationId = readResult.operationLocation.split('/').slice(-1)[0];
@@ -270,10 +267,7 @@ async function analyzeImageFromBuffer(buffer, contentType) {
   try {
     console.log('🔍 Starting image analysis (buffer)');
 
-    const readStream = new Stream.PassThrough();
-    readStream.end(buffer);
-
-    const analysis = await client.analyzeImageInStream(readStream, {
+    const analysis = await client.analyzeImageInStream(buffer, {
       visualFeatures: ['Tags', 'Description', 'Objects', 'Color', 'Categories']
     });
 
