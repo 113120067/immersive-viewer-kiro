@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>簡單測試</title>
+</head>
+<body>
+    <h1>Kids Vocabulary 測試</h1>
+    
+    <form id="testForm">
+        <input type="text" id="testInput" placeholder="輸入單字" value="dog">
+        <button type="submit">測試生成</button>
+    </form>
+    
+    <div id="result"></div>
+    <img id="testImage" style="max-width: 300px; display: none;">
+
+    <script>
+        document.getElementById('testForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const input = document.getElementById('testInput').value;
+            const result = document.getElementById('result');
+            const img = document.getElementById('testImage');
+            
+            result.innerHTML = '正在生成...';
+            
+            // 生成 Pollinations URL
+            const prompt = `cute cartoon ${input}, children's book illustration style, colorful, simple, friendly`;
+            const encodedPrompt = encodeURIComponent(prompt);
+            const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=512&height=512&model=flux&enhance=true`;
+            
+            console.log('生成的 URL:', imageUrl);
+            
+            img.src = imageUrl;
+            img.style.display = 'block';
+            img.onload = function() {
+                result.innerHTML = '✅ 圖片載入成功！';
+            };
+            img.onerror = function() {
+                result.innerHTML = '❌ 圖片載入失敗';
+            };
+        });
+    </script>
+</body>
+</html>

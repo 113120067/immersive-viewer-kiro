@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>按鈕測試</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-4">
+        <h2>按鈕功能測試</h2>
+        
+        <form id="simpleVocabForm">
+            <!-- 手機版：輸入框和按鈕分開排列 -->
+            <div class="d-block d-sm-none">
+                <input id="wordInput" class="form-control form-control-lg mb-3" type="text" placeholder="例如：apple, I am happy..." required>
+                <div class="d-grid">
+                    <button id="generateBtn" class="btn btn-success btn-lg" type="submit">
+                        <span>🎨 生成圖片！</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 平板和桌面版：輸入框和按鈕在同一排 -->
+            <div class="input-group input-group-lg d-none d-sm-flex">
+                <input id="wordInputDesktop" class="form-control form-control-lg" type="text" placeholder="例如：apple, I am happy..." required>
+                <button id="generateBtnDesktop" class="btn btn-success btn-lg px-2 px-md-3" type="submit">
+                    <i class="fas fa-magic d-none d-sm-inline"></i>
+                    <span class="d-sm-none">🎨</span>
+                    <span class="d-none d-sm-inline"> 生成圖片！</span>
+                    <span class="d-sm-none">生成</span>
+                </button>
+            </div>
+        </form>
+        
+        <div id="result" class="mt-3"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('頁面載入完成');
+            
+            const form = document.getElementById('simpleVocabForm');
+            const result = document.getElementById('result');
+            
+            if (form) {
+                console.log('找到表單');
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    console.log('表單提交事件觸發');
+                    
+                    // 獲取輸入值
+                    const mobileInput = document.getElementById('wordInput');
+                    const desktopInput = document.getElementById('wordInputDesktop');
+                    
+                    console.log('手機版輸入框:', mobileInput);
+                    console.log('桌面版輸入框:', desktopInput);
+                    
+                    let input = '';
+                    if (mobileInput && mobileInput.offsetParent !== null) {
+                        input = mobileInput.value.trim();
+                        console.log('使用手機版輸入:', input);
+                    } else if (desktopInput && desktopInput.offsetParent !== null) {
+                        input = desktopInput.value.trim();
+                        console.log('使用桌面版輸入:', input);
+                    }
+                    
+                    if (input) {
+                        result.innerHTML = `<div class="alert alert-success">輸入內容: ${input}</div>`;
+                    } else {
+                        result.innerHTML = `<div class="alert alert-danger">沒有輸入內容</div>`;
+                    }
+                });
+            } else {
+                console.log('找不到表單');
+            }
+        });
+    </script>
+</body>
+</html>

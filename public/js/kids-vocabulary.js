@@ -93,10 +93,16 @@ class KidsVocabularyGenerator {
   setupEventListeners() {
     // 表單提交
     const form = document.getElementById('simpleVocabForm');
-    form.addEventListener('submit', (e) => {
-      e.preventDefault();
-      this.generateImage();
-    });
+    if (form) {
+      console.log('✅ 找到表單，設置事件監聽器');
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        console.log('📝 表單提交事件觸發');
+        this.generateImage();
+      });
+    } else {
+      console.error('❌ 找不到表單 #simpleVocabForm');
+    }
 
     // 手機版輸入框 Enter 鍵
     const wordInput = document.getElementById('wordInput');
@@ -195,12 +201,28 @@ class KidsVocabularyGenerator {
    * 生成圖片
    */
   async generateImage() {
-    if (this.isGenerating) return;
+    console.log('🎨 generateImage 方法被調用');
+    if (this.isGenerating) {
+      console.log('⚠️ 正在生成中，跳過');
+      return;
+    }
 
     // 獲取輸入值（手機版或桌面版）
     const mobileInput = document.getElementById('wordInput');
     const desktopInput = document.getElementById('wordInputDesktop');
-    const input = (mobileInput && mobileInput.offsetParent !== null ? mobileInput.value : desktopInput.value).trim();
+    
+    let input = '';
+    if (mobileInput && mobileInput.offsetParent !== null) {
+      input = mobileInput.value.trim();
+    } else if (desktopInput && desktopInput.offsetParent !== null) {
+      input = desktopInput.value.trim();
+    } else if (mobileInput) {
+      input = mobileInput.value.trim();
+    } else if (desktopInput) {
+      input = desktopInput.value.trim();
+    }
+    
+    console.log('獲取到的輸入值:', input);
 
     // 驗證輸入
     if (!input) {
@@ -226,7 +248,9 @@ class KidsVocabularyGenerator {
       this.hideResult();
 
       // 直接使用 Pollinations 免費服務，無需後端 API
+      console.log('🔗 開始生成 Pollinations URL');
       const imageUrl = this.generatePollinationsUrl(input);
+      console.log('🔗 生成的圖片 URL:', imageUrl);
       
       // 模擬 API 響應格式
       const data = {
@@ -235,6 +259,7 @@ class KidsVocabularyGenerator {
         provider: 'pollinations'
       };
 
+      console.log('📊 準備顯示結果:', data);
       if (data.success) {
         this.showResult(data, input);
         this.addToRecentWords(input, data.imageUrl);
@@ -294,9 +319,18 @@ class KidsVocabularyGenerator {
       imageElement: !!imageElement,
       wordTitleElement: !!wordTitleElement,
       wordMeaningElement: !!wordMeaningElement,
+      aiProviderElement: !!aiProviderElement,
+      downloadLink: !!downloadLink,
       resultContainer: !!resultContainer,
       placeholder: !!placeholder
     });
+
+    // 檢查必要元素是否存在
+    if (!imageElement || !resultContainer || !placeholder) {
+      console.error('❌ 缺少必要的 DOM 元素');
+      this.showError('頁面元素載入有問題，請重新整理頁面');
+      return;
+    }
 
     // 儲存當前輸入（單字或句子）
     this.currentWord = input;
