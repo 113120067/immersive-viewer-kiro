@@ -48,6 +48,63 @@ app.use('/vocabulary-generator', vocabularyGeneratorRouter);
 app.use('/kids-vocabulary', kidsVocabularyRouter);
 app.use('/usage-stats', usageStatsRouter);
 
+// Serve test HTML files
+app.get('/iphone-debug.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'iphone-debug.html'));
+});
+
+app.get('/test-iphone-fix.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'test-iphone-fix.html'));
+});
+
+app.get('/debug-zeabur.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'debug-zeabur.html'));
+});
+
+app.get('/simple-test.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'simple-test.html'));
+});
+
+app.get('/test-button-debug.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'test-button-debug.html'));
+});
+
+app.get('/test-responsive-design.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'test-responsive-design.html'));
+});
+
+app.get('/test-speech-speed.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'test-speech-speed.html'));
+});
+
+app.get('/test-homepage-redirect.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'test-homepage-redirect.html'));
+});
+
+app.get('/test-no-auth.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'test-no-auth.html'));
+});
+
+app.get('/test-sentence-support.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'test-sentence-support.html'));
+});
+
+app.get('/final-test.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'final-test.html'));
+});
+
+app.get('/quick-test.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'quick-test.html'));
+});
+
+app.get('/test-image-load.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'test-image-load.html'));
+});
+
+app.get('/test-kids-friendly.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'test-kids-friendly.html'));
+});
+
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   next(createError(404));

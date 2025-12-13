@@ -104,6 +104,41 @@ class KidsVocabularyGenerator {
       console.error('❌ 找不到表單 #simpleVocabForm');
     }
 
+    // iOS 兼容性：直接為按鈕添加事件監聽器
+    const generateBtnMobile = document.getElementById('generateBtn');
+    const generateBtnDesktop = document.getElementById('generateBtnDesktop');
+    
+    if (generateBtnMobile) {
+      console.log('✅ 找到手機版按鈕，設置事件監聽器');
+      // iOS 需要同時監聽 touchstart 和 click 事件
+      generateBtnMobile.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        console.log('📱 手機版按鈕 touchstart 事件觸發');
+        this.generateImage();
+      }, { passive: false });
+      
+      generateBtnMobile.addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log('🖱️ 手機版按鈕 click 事件觸發');
+        this.generateImage();
+      });
+    }
+    
+    if (generateBtnDesktop) {
+      console.log('✅ 找到桌面版按鈕，設置事件監聽器');
+      generateBtnDesktop.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        console.log('📱 桌面版按鈕 touchstart 事件觸發');
+        this.generateImage();
+      }, { passive: false });
+      
+      generateBtnDesktop.addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log('🖱️ 桌面版按鈕 click 事件觸發');
+        this.generateImage();
+      });
+    }
+
     // 手機版輸入框 Enter 鍵
     const wordInput = document.getElementById('wordInput');
     if (wordInput) {
@@ -202,6 +237,14 @@ class KidsVocabularyGenerator {
    */
   async generateImage() {
     console.log('🎨 generateImage 方法被調用');
+    console.log('📱 設備信息:', {
+      userAgent: navigator.userAgent,
+      platform: navigator.platform,
+      touchSupport: 'ontouchstart' in window,
+      screenSize: `${window.screen.width}x${window.screen.height}`,
+      viewportSize: `${window.innerWidth}x${window.innerHeight}`
+    });
+    
     if (this.isGenerating) {
       console.log('⚠️ 正在生成中，跳過');
       return;
@@ -335,21 +378,57 @@ class KidsVocabularyGenerator {
     // 儲存當前輸入（單字或句子）
     this.currentWord = input;
     
-    // 簡化圖片載入邏輯
+    // iOS 兼容的圖片載入邏輯
     console.log('🖼️ 開始載入圖片:', data.imageUrl);
-    imageElement.onload = () => {
-      console.log('✅ 圖片載入成功');
-      // 圖片載入成功後觸發發音
-      this.handlePronunciation(input);
+    
+    // 為 iOS 添加更長的超時時間和重試機制
+    let imageLoadTimeout;
+    let retryCount = 0;
+    const maxRetries = 3;
+    
+    const loadImage = (url) => {
+      console.log(`🔄 嘗試載入圖片 (第 ${retryCount + 1} 次):`, url);
+      
+      imageElement.onload = () => {
+        console.log('✅ 圖片載入成功');
+        if (imageLoadTimeout) clearTimeout(imageLoadTimeout);
+        // 圖片載入成功後觸發發音
+        this.handlePronunciation(input);
+      };
+      
+      imageElement.onerror = () => {
+        console.error('❌ 圖片載入失敗');
+        if (imageLoadTimeout) clearTimeout(imageLoadTimeout);
+        
+        if (retryCount < maxRetries) {
+          retryCount++;
+          console.log(`🔄 準備重試載入圖片 (${retryCount}/${maxRetries})`);
+          setTimeout(() => loadImage(url), 2000 * retryCount); // 遞增延遲
+        } else {
+          imageElement.alt = `${input} 的圖片載入失敗`;
+          this.showError('圖片載入失敗，請稍後再試或檢查網路連線');
+        }
+      };
+      
+      // iOS Safari 需要更長的載入時間
+      imageLoadTimeout = setTimeout(() => {
+        console.log('⏰ 圖片載入超時');
+        if (retryCount < maxRetries) {
+          retryCount++;
+          console.log(`🔄 超時重試載入圖片 (${retryCount}/${maxRetries})`);
+          loadImage(url);
+        } else {
+          imageElement.alt = `${input} 的圖片載入超時`;
+          this.showError('圖片載入超時，請檢查網路連線後重試');
+        }
+      }, 15000); // iOS 需要更長的超時時間
+      
+      imageElement.src = url;
+      imageElement.alt = `${input} 的圖片`;
     };
     
-    imageElement.onerror = () => {
-      console.error('❌ 圖片載入失敗');
-      imageElement.alt = `${input} 的圖片載入失敗`;
-    };
-    
-    imageElement.src = data.imageUrl;
-    imageElement.alt = `${input} 的圖片`;
+    // 開始載入圖片
+    loadImage(data.imageUrl);
 
     // 設置內容資訊
     const wordCount = input.trim().split(/\s+/).length;
@@ -1082,8 +1161,53 @@ class KidsVocabularyGenerator {
 // 初始化
 let kidsVocabGenerator;
 document.addEventListener('DOMContentLoaded', () => {
+  console.log('📱 DOM 載入完成，初始化應用');
   kidsVocabGenerator = new KidsVocabularyGenerator();
   
   // 全域函數供 HTML 調用
   window.kidsVocabGenerator = kidsVocabGenerator;
+  
+  // iOS 特殊處理：添加全域點擊處理器
+  if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+    console.log('📱 檢測到 iOS 設備，添加特殊處理');
+    
+    // 為整個文檔添加觸控事件監聽
+    document.addEventListener('touchstart', function(e) {
+      const target = e.target;
+      if (target.id === 'generateBtn' || target.id === 'generateBtnDesktop') {
+        console.log('📱 iOS 觸控事件：生成按鈕被點擊');
+        e.preventDefault();
+        if (kidsVocabGenerator && !kidsVocabGenerator.isGenerating) {
+          kidsVocabGenerator.generateImage();
+        }
+      }
+    }, { passive: false });
+    
+    // 添加點擊事件作為備用
+    document.addEventListener('click', function(e) {
+      const target = e.target;
+      if (target.id === 'generateBtn' || target.id === 'generateBtnDesktop') {
+        console.log('📱 iOS 點擊事件：生成按鈕被點擊');
+        e.preventDefault();
+        if (kidsVocabGenerator && !kidsVocabGenerator.isGenerating) {
+          kidsVocabGenerator.generateImage();
+        }
+      }
+    });
+  }
+});
+
+// 全域錯誤處理
+window.addEventListener('error', function(e) {
+  console.error('💥 全域錯誤:', e.error);
+  if (kidsVocabGenerator) {
+    kidsVocabGenerator.showError('發生未預期的錯誤，請重新整理頁面');
+  }
+});
+
+window.addEventListener('unhandledrejection', function(e) {
+  console.error('💥 Promise 錯誤:', e.reason);
+  if (kidsVocabGenerator) {
+    kidsVocabGenerator.showError('網路請求失敗，請檢查連線後重試');
+  }
 });

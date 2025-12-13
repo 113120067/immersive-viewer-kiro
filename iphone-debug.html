@@ -80,6 +80,7 @@
             <button id="testForm" class="test-button">2️⃣ 表單提交測試</button>
             <button id="testImage" class="test-button">3️⃣ 圖片生成測試</button>
             <button id="testTouch" class="test-button">4️⃣ 觸控事件測試</button>
+            <button id="testMainApp" class="test-button">5️⃣ 主應用按鈕測試</button>
         </div>
         
         <div id="status" class="status info">準備測試...</div>
@@ -222,51 +223,84 @@
             }
             
             try {
-                // 生成 Pollinations URL
-                const prompt = `cute cartoon ${input}, children's book illustration style, colorful, simple, friendly`;
+                // 使用與主應用相同的邏輯生成 URL
+                const prompt = `cute cartoon ${input}`;
                 const encodedPrompt = encodeURIComponent(prompt);
-                const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=512&height=512&model=flux&enhance=true`;
+                const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&model=flux&enhance=true`;
                 
                 log('🔗 生成的圖片 URL: ' + imageUrl);
                 
-                // 測試圖片載入
+                // 測試圖片載入 - 使用與主應用相同的重試邏輯
                 const img = document.getElementById('testImageElement');
                 const resultDiv = document.getElementById('result');
                 
-                img.onload = function() {
-                    log('✅ 圖片載入成功', 'success');
-                    setStatus('✅ 圖片生成測試通過', 'success');
-                    resultDiv.innerHTML = `
-                        <div class="alert alert-success">
-                            <strong>✅ 成功！</strong><br>
-                            單字: ${input}<br>
-                            圖片已載入
-                        </div>
-                    `;
+                let retryCount = 0;
+                const maxRetries = 3;
+                let loadTimeout;
+                
+                const loadImage = (url) => {
+                    log(`🔄 嘗試載入圖片 (第 ${retryCount + 1} 次)`);
+                    
+                    img.onload = function() {
+                        log('✅ 圖片載入成功', 'success');
+                        setStatus('✅ 圖片生成測試通過', 'success');
+                        if (loadTimeout) clearTimeout(loadTimeout);
+                        resultDiv.innerHTML = `
+                            <div class="alert alert-success">
+                                <strong>✅ 成功！</strong><br>
+                                單字: ${input}<br>
+                                圖片已載入<br>
+                                重試次數: ${retryCount}
+                            </div>
+                        `;
+                    };
+                    
+                    img.onerror = function() {
+                        log('❌ 圖片載入失敗', 'error');
+                        if (loadTimeout) clearTimeout(loadTimeout);
+                        
+                        if (retryCount < maxRetries) {
+                            retryCount++;
+                            log(`🔄 準備重試載入圖片 (${retryCount}/${maxRetries})`);
+                            setTimeout(() => loadImage(url), 2000 * retryCount);
+                        } else {
+                            setStatus('❌ 圖片載入失敗', 'error');
+                            resultDiv.innerHTML = `
+                                <div class="alert alert-danger">
+                                    <strong>❌ 失敗！</strong><br>
+                                    圖片無法載入<br>
+                                    已重試 ${maxRetries} 次<br>
+                                    可能是網路問題或 API 限制
+                                </div>
+                            `;
+                        }
+                    };
+                    
+                    // iOS Safari 需要更長的載入時間
+                    loadTimeout = setTimeout(() => {
+                        log('⏰ 圖片載入超時');
+                        if (retryCount < maxRetries) {
+                            retryCount++;
+                            log(`🔄 超時重試載入圖片 (${retryCount}/${maxRetries})`);
+                            loadImage(url);
+                        } else {
+                            setStatus('⏰ 圖片載入超時', 'warning');
+                            resultDiv.innerHTML = `
+                                <div class="alert alert-warning">
+                                    <strong>⏰ 超時！</strong><br>
+                                    圖片載入超時<br>
+                                    已重試 ${maxRetries} 次<br>
+                                    請檢查網路連線
+                                </div>
+                            `;
+                        }
+                    }, 15000);
+                    
+                    img.src = url;
                 };
                 
-                img.onerror = function() {
-                    log('❌ 圖片載入失敗', 'error');
-                    setStatus('❌ 圖片載入失敗', 'error');
-                    resultDiv.innerHTML = `
-                        <div class="alert alert-danger">
-                            <strong>❌ 失敗！</strong><br>
-                            圖片無法載入<br>
-                            可能是網路問題或 API 限制
-                        </div>
-                    `;
-                };
-                
-                // 設置超時
-                setTimeout(() => {
-                    if (!img.complete) {
-                        log('⏰ 圖片載入超時', 'error');
-                        setStatus('⏰ 圖片載入超時', 'warning');
-                    }
-                }, 15000);
-                
-                img.src = imageUrl;
                 img.style.display = 'block';
+                loadImage(imageUrl);
                 
             } catch (error) {
                 log('❌ 圖片生成測試失敗: ' + error.message, 'error');
@@ -326,6 +360,84 @@
             } catch (error) {
                 log('❌ 觸控事件測試失敗: ' + error.message, 'error');
                 setStatus('❌ 觸控事件測試失敗', 'error');
+            }
+        });
+        
+        document.getElementById('testMainApp').addEventListener('click', function() {
+            log('開始主應用按鈕測試');
+            setStatus('測試主應用按鈕功能...', 'warning');
+            
+            try {
+                // 創建與主應用相同的按鈕結構
+                const testForm = document.createElement('form');
+                testForm.id = 'testMainForm';
+                
+                const testInput = document.createElement('input');
+                testInput.type = 'text';
+                testInput.value = 'apple';
+                testInput.className = 'test-input';
+                
+                const testButton = document.createElement('button');
+                testButton.type = 'submit';
+                testButton.className = 'test-button';
+                testButton.style.cssText += '-webkit-appearance: none; -webkit-tap-highlight-color: transparent;';
+                testButton.setAttribute('ontouchstart', '');
+                testButton.innerHTML = '🎨 測試生成按鈕';
+                
+                testForm.appendChild(testInput);
+                testForm.appendChild(testButton);
+                document.getElementById('result').appendChild(testForm);
+                
+                let formSubmitted = false;
+                let touchStarted = false;
+                let clicked = false;
+                
+                // 表單提交事件
+                testForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    formSubmitted = true;
+                    log('✅ 表單提交事件觸發');
+                });
+                
+                // 按鈕觸控事件
+                testButton.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    touchStarted = true;
+                    log('✅ 按鈕 touchstart 事件觸發');
+                    
+                    // 模擬主應用的生成邏輯
+                    const input = testInput.value.trim();
+                    if (input) {
+                        const prompt = `cute cartoon ${input}`;
+                        const encodedPrompt = encodeURIComponent(prompt);
+                        const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&model=flux&enhance=true`;
+                        log('🔗 模擬生成 URL: ' + imageUrl);
+                    }
+                }, { passive: false });
+                
+                // 按鈕點擊事件
+                testButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    clicked = true;
+                    log('✅ 按鈕 click 事件觸發');
+                });
+                
+                log('📱 請點擊測試按鈕來測試功能');
+                
+                // 5秒後檢查結果
+                setTimeout(() => {
+                    if (touchStarted || clicked || formSubmitted) {
+                        setStatus('✅ 主應用按鈕測試通過', 'success');
+                        log(`✅ 測試結果 - touchstart: ${touchStarted}, click: ${clicked}, form: ${formSubmitted}`, 'success');
+                    } else {
+                        setStatus('⚠️ 請手動點擊測試按鈕', 'warning');
+                        log('⚠️ 尚未檢測到按鈕互動，請手動點擊測試按鈕', 'warning');
+                    }
+                }, 5000);
+                
+            } catch (error) {
+                log('❌ 主應用按鈕測試失敗: ' + error.message, 'error');
+                setStatus('❌ 主應用按鈕測試失敗', 'error');
             }
         });
         

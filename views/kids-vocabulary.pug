@@ -33,7 +33,11 @@ block content
                     required
                   )
                   .d-grid
-                    button#generateBtn.btn.btn-success.btn-lg(type="submit")
+                    button#generateBtn.btn.btn-success.btn-lg(
+                      type="submit"
+                      style="-webkit-appearance: none; -webkit-tap-highlight-color: transparent;"
+                      ontouchstart=""
+                    )
                       span 🎨 生成圖片！
                 
                 // 平板和桌面版：輸入框和按鈕在同一排
@@ -43,7 +47,11 @@ block content
                     placeholder="例如：apple, I am happy..."
                     required
                   )
-                  button#generateBtnDesktop.btn.btn-success.btn-lg.px-2.px-md-3(type="submit")
+                  button#generateBtnDesktop.btn.btn-success.btn-lg.px-2.px-md-3(
+                    type="submit"
+                    style="-webkit-appearance: none; -webkit-tap-highlight-color: transparent;"
+                    ontouchstart=""
+                  )
                     span 🎨 生成圖片！
                 .form-text.mt-2.small
                   .d-block.d-md-none
@@ -467,18 +475,27 @@ block content
         min-height: 48px;
         padding: 12px 20px;
         font-size: 16px;
+        -webkit-appearance: none;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
       }
       
       .btn-lg {
         min-height: 56px;
         padding: 16px 24px;
         font-size: 18px;
+        -webkit-appearance: none;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
       }
       
       .btn-sm {
         min-height: 44px;
         padding: 10px 16px;
         font-size: 15px;
+        -webkit-appearance: none;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
       }
       
       /* 表單控制項加大 */
@@ -501,6 +518,27 @@ block content
       /* 輸入框加大 */
       input[type="text"], input[type="range"] {
         min-height: 48px;
+      }
+    }
+    
+    /* iOS Safari 特定優化 */
+    @supports (-webkit-touch-callout: none) {
+      .btn {
+        -webkit-appearance: none;
+        -webkit-tap-highlight-color: transparent;
+        -webkit-user-select: none;
+        touch-action: manipulation;
+      }
+      
+      /* 防止 iOS 縮放 */
+      input[type="text"] {
+        font-size: 16px !important;
+      }
+      
+      /* iOS 按鈕樣式重置 */
+      button {
+        -webkit-appearance: none;
+        border-radius: 0;
       }
     }
     
