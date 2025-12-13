@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>iPhone 調試頁面</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            padding: 10px;
+            background: #f0f8ff;
+        }
+        .debug-info {
+            background: #fff;
+            border: 2px solid #007bff;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+        .test-button {
+            width: 100%;
+            padding: 15px;
+            font-size: 18px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: none;
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            font-weight: bold;
+        }
+        .test-input {
+            width: 100%;
+            padding: 15px;
+            font-size: 18px;
+            border: 2px solid #28a745;
+            border-radius: 8px;
+            text-align: center;
+            margin: 10px 0;
+        }
+        .log {
+            background: #000;
+            color: #0f0;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin: 10px 0;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .warning { background: #fff3cd; color: #856404; }
+        .info { background: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <h2>📱 iPhone 調試頁面</h2>
+        
+        <div class="debug-info">
+            <h5>🔍 設備信息</h5>
+            <div id="deviceInfo"></div>
+        </div>
+        
+        <div class="debug-info">
+            <h5>🧪 功能測試</h5>
+            
+            <input type="text" id="testInput" class="test-input" placeholder="輸入單字測試" value="apple">
+            
+            <button id="testBasic" class="test-button">1️⃣ 基本功能測試</button>
+            <button id="testForm" class="test-button">2️⃣ 表單提交測試</button>
+            <button id="testImage" class="test-button">3️⃣ 圖片生成測試</button>
+            <button id="testTouch" class="test-button">4️⃣ 觸控事件測試</button>
+        </div>
+        
+        <div id="status" class="status info">準備測試...</div>
+        
+        <div class="debug-info">
+            <h5>📋 調試日誌</h5>
+            <div id="log" class="log"></div>
+            <button id="clearLog" class="btn btn-sm btn-secondary">清除日誌</button>
+        </div>
+        
+        <div class="debug-info">
+            <h5>🖼️ 測試結果</h5>
+            <div id="result"></div>
+            <img id="testImageElement" style="max-width: 100%; display: none; border: 2px solid #28a745; border-radius: 8px; margin-top: 10px;">
+        </div>
+    </div>
+
+    <script>
+        // 日誌系統
+        const logElement = document.getElementById('log');
+        const statusElement = document.getElementById('status');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}`;
+            console.log(logEntry);
+            
+            const div = document.createElement('div');
+            div.textContent = logEntry;
+            div.style.color = type === 'error' ? '#ff6b6b' : type === 'success' ? '#51cf66' : '#74c0fc';
+            logElement.appendChild(div);
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+        
+        function setStatus(message, type = 'info') {
+            statusElement.textContent = message;
+            statusElement.className = `status ${type}`;
+        }
+        
+        // 設備信息檢測
+        function detectDevice() {
+            const info = {
+                'User Agent': navigator.userAgent,
+                '螢幕尺寸': `${window.screen.width} x ${window.screen.height}`,
+                '視窗尺寸': `${window.innerWidth} x ${window.innerHeight}`,
+                '設備像素比': window.devicePixelRatio,
+                '觸控支援': 'ontouchstart' in window ? '是' : '否',
+                'iOS版本': /OS (\d+)_(\d+)/.test(navigator.userAgent) ? RegExp.$1 + '.' + RegExp.$2 : '未知',
+                '瀏覽器': navigator.userAgent.includes('Safari') ? 'Safari' : navigator.userAgent.includes('Chrome') ? 'Chrome' : '其他',
+                '語言': navigator.language,
+                '時區': Intl.DateTimeFormat().resolvedOptions().timeZone
+            };
+            
+            const deviceInfoElement = document.getElementById('deviceInfo');
+            deviceInfoElement.innerHTML = Object.entries(info)
+                .map(([key, value]) => `<strong>${key}:</strong> ${value}`)
+                .join('<br>');
+            
+            log('設備信息檢測完成', 'success');
+        }
+        
+        // 測試函數
+        document.getElementById('testBasic').addEventListener('click', function() {
+            log('開始基本功能測試');
+            setStatus('測試基本功能...', 'warning');
+            
+            try {
+                // 測試 JavaScript 基本功能
+                const testObj = { test: 'value' };
+                const testArray = [1, 2, 3];
+                const testPromise = new Promise(resolve => resolve('ok'));
+                
+                log('✅ 物件創建正常');
+                log('✅ 陣列操作正常');
+                log('✅ Promise 支援正常');
+                
+                // 測試 DOM 操作
+                const testDiv = document.createElement('div');
+                testDiv.textContent = '測試元素';
+                log('✅ DOM 操作正常');
+                
+                // 測試事件監聽
+                testDiv.addEventListener('click', () => {});
+                log('✅ 事件監聽正常');
+                
+                setStatus('✅ 基本功能測試通過', 'success');
+                
+            } catch (error) {
+                log('❌ 基本功能測試失敗: ' + error.message, 'error');
+                setStatus('❌ 基本功能測試失敗', 'error');
+            }
+        });
+        
+        document.getElementById('testForm').addEventListener('click', function() {
+            log('開始表單提交測試');
+            setStatus('測試表單提交...', 'warning');
+            
+            try {
+                // 創建測試表單
+                const form = document.createElement('form');
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.value = 'test';
+                form.appendChild(input);
+                
+                // 測試表單事件
+                let eventTriggered = false;
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    eventTriggered = true;
+                    log('✅ 表單提交事件觸發');
+                });
+                
+                // 模擬提交
+                const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
+                form.dispatchEvent(submitEvent);
+                
+                if (eventTriggered) {
+                    setStatus('✅ 表單提交測試通過', 'success');
+                } else {
+                    log('❌ 表單提交事件未觸發', 'error');
+                    setStatus('❌ 表單提交測試失敗', 'error');
+                }
+                
+            } catch (error) {
+                log('❌ 表單提交測試失敗: ' + error.message, 'error');
+                setStatus('❌ 表單提交測試失敗', 'error');
+            }
+        });
+        
+        document.getElementById('testImage').addEventListener('click', function() {
+            log('開始圖片生成測試');
+            setStatus('測試圖片生成...', 'warning');
+            
+            const input = document.getElementById('testInput').value.trim();
+            if (!input) {
+                log('❌ 請輸入測試單字', 'error');
+                setStatus('❌ 請輸入測試單字', 'error');
+                return;
+            }
+            
+            try {
+                // 生成 Pollinations URL
+                const prompt = `cute cartoon ${input}, children's book illustration style, colorful, simple, friendly`;
+                const encodedPrompt = encodeURIComponent(prompt);
+                const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=512&height=512&model=flux&enhance=true`;
+                
+                log('🔗 生成的圖片 URL: ' + imageUrl);
+                
+                // 測試圖片載入
+                const img = document.getElementById('testImageElement');
+                const resultDiv = document.getElementById('result');
+                
+                img.onload = function() {
+                    log('✅ 圖片載入成功', 'success');
+                    setStatus('✅ 圖片生成測試通過', 'success');
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-success">
+                            <strong>✅ 成功！</strong><br>
+                            單字: ${input}<br>
+                            圖片已載入
+                        </div>
+                    `;
+                };
+                
+                img.onerror = function() {
+                    log('❌ 圖片載入失敗', 'error');
+                    setStatus('❌ 圖片載入失敗', 'error');
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-danger">
+                            <strong>❌ 失敗！</strong><br>
+                            圖片無法載入<br>
+                            可能是網路問題或 API 限制
+                        </div>
+                    `;
+                };
+                
+                // 設置超時
+                setTimeout(() => {
+                    if (!img.complete) {
+                        log('⏰ 圖片載入超時', 'error');
+                        setStatus('⏰ 圖片載入超時', 'warning');
+                    }
+                }, 15000);
+                
+                img.src = imageUrl;
+                img.style.display = 'block';
+                
+            } catch (error) {
+                log('❌ 圖片生成測試失敗: ' + error.message, 'error');
+                setStatus('❌ 圖片生成測試失敗', 'error');
+            }
+        });
+        
+        document.getElementById('testTouch').addEventListener('click', function() {
+            log('開始觸控事件測試');
+            setStatus('測試觸控事件...', 'warning');
+            
+            try {
+                // 測試觸控事件
+                const testButton = document.createElement('button');
+                testButton.textContent = '觸控測試按鈕';
+                testButton.style.cssText = 'width: 100%; padding: 10px; margin: 10px 0; background: #007bff; color: white; border: none; border-radius: 5px;';
+                
+                let touchStarted = false;
+                let touchEnded = false;
+                let clicked = false;
+                
+                testButton.addEventListener('touchstart', () => {
+                    touchStarted = true;
+                    log('✅ touchstart 事件觸發');
+                });
+                
+                testButton.addEventListener('touchend', () => {
+                    touchEnded = true;
+                    log('✅ touchend 事件觸發');
+                });
+                
+                testButton.addEventListener('click', () => {
+                    clicked = true;
+                    log('✅ click 事件觸發');
+                });
+                
+                document.getElementById('result').appendChild(testButton);
+                
+                // 模擬觸控事件
+                const touchStart = new TouchEvent('touchstart', { bubbles: true });
+                const touchEnd = new TouchEvent('touchend', { bubbles: true });
+                const clickEvent = new MouseEvent('click', { bubbles: true });
+                
+                testButton.dispatchEvent(touchStart);
+                testButton.dispatchEvent(touchEnd);
+                testButton.dispatchEvent(clickEvent);
+                
+                setTimeout(() => {
+                    if (touchStarted && touchEnded && clicked) {
+                        setStatus('✅ 觸控事件測試通過', 'success');
+                    } else {
+                        log(`❌ 觸控事件測試部分失敗 - touchstart: ${touchStarted}, touchend: ${touchEnded}, click: ${clicked}`, 'error');
+                        setStatus('⚠️ 觸控事件測試部分失敗', 'warning');
+                    }
+                }, 100);
+                
+            } catch (error) {
+                log('❌ 觸控事件測試失敗: ' + error.message, 'error');
+                setStatus('❌ 觸控事件測試失敗', 'error');
+            }
+        });
+        
+        document.getElementById('clearLog').addEventListener('click', function() {
+            logElement.innerHTML = '';
+            log('日誌已清除');
+        });
+        
+        // 頁面載入完成
+        document.addEventListener('DOMContentLoaded', function() {
+            log('📱 iPhone 調試頁面載入完成', 'success');
+            detectDevice();
+            setStatus('準備就緒，請開始測試', 'info');
+        });
+        
+        // 錯誤捕獲
+        window.addEventListener('error', function(e) {
+            log('💥 JavaScript 錯誤: ' + e.message + ' (行 ' + e.lineno + ')', 'error');
+        });
+        
+        window.addEventListener('unhandledrejection', function(e) {
+            log('💥 Promise 錯誤: ' + e.reason, 'error');
+        });
+    </script>
+</body>
+</html>
