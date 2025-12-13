@@ -3,8 +3,8 @@ extends layout
 block content
   .container-fluid.p-0
     .row.g-0.justify-content-center
-      .col-12.col-lg-8.order-1.order-lg-1
-        // 主要區域
+      .col-12.col-lg-8.order-2.order-lg-1
+        // 主要輸入區域
         .card.border-success.h-100
           .card-header.bg-success.text-white.text-center.py-2.py-md-3
             h3.mb-0.fs-4.fs-md-3
@@ -19,7 +19,7 @@ block content
               p.mb-2.small.mb-md-2 輸入英文單字或句子，我會幫你畫一張可愛的圖片來學習！
               p.mb-0.small.text-muted ✨ 完全免費使用，無需註冊登入
             
-            // 簡單輸入表單
+            // 簡單輸入表單 - 移到最近學過內容之前
             form#simpleVocabForm
               .mb-3.mb-md-4
                 label.form-label.h6.h5-md(for="wordInput") 
@@ -72,6 +72,15 @@ block content
               input#techniqueSelect(type="hidden" value="story")
               input#includeTextCheck(type="hidden" value="true")
             
+            // 最近學過的內容 - 放在輸入表單之後
+            .card.mb-3.mb-md-4.border-info
+              .card-header.bg-info.text-white.text-center.py-2
+                h6.mb-0.small
+                  | 📚 最近學過的內容
+              .card-body.p-2.p-md-3
+                #recentWords
+                  p.text-muted.text-center.mb-0.small 還沒有學過的內容
+            
             // 生成狀態
             .mt-3.mt-md-4#generationStatus(style="display: none")
               .alert.alert-primary.text-center.py-2.py-md-3
@@ -86,8 +95,8 @@ block content
                 i.fas.fa-exclamation-triangle.me-2
                 span#errorText
       
-      .col-12.col-lg-4.order-2.order-lg-2
-        // 結果區域
+      .col-12.col-lg-4.order-1.order-lg-2
+        // 圖片顯示區域
         .card.border-primary
           .card-header.bg-primary.text-white.text-center.py-2.py-md-3
             h6.h5-md.mb-0
@@ -134,14 +143,7 @@ block content
                 h6 你的圖片會出現在這裡
                 p.small 輸入單字後點擊「生成圖片」
         
-        // 最近的內容
-        .card.mt-1.border-info
-          .card-header.bg-info.text-white.text-center.py-2
-            h6.mb-0.small
-              | 📚 最近學過的內容
-          .card-body.p-2.p-md-3
-            #recentWords
-              p.text-muted.text-center.mb-0.small 還沒有學過的內容
+
       
       // 語音功能設定區域 - 放在最下方
       .col-12.order-3
