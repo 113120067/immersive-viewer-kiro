@@ -432,7 +432,49 @@ class KidsVocabularyGenerator {
 
   generateKidsPrompt(input) {
     const safeInput = input.replace(/[^\w\s.,!?'-]/gi, '');
-    return `cute cartoon illustration of ${safeInput}, simple vector art, vibrant colors, for children educational material, white background, high quality, no guns, no blood, no violence, no nudity`;
+    // Enhanced Safety Prompt
+    return `cute cartoon illustration of ${safeInput}, safe for kids, G-rated, simple vector art, vibrant colors, for primary school educational material, white background, high quality, no guns, no blood, no violence, no nudity`;
+  }
+
+  async reportImage(word) {
+    if (!confirm(`您確定要檢舉 "${word}" 的圖片嗎？\n\n如果這張圖片不適合小朋友，我們會進行審核與處理。`)) return;
+
+    const reportBtn = document.getElementById('reportImageBtn');
+    if (reportBtn) {
+      reportBtn.disabled = true;
+      reportBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 處理中...';
+    }
+
+    try {
+      const res = await fetch('/kids-vocabulary/report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ word: word })
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        if (data.status === 'banned') {
+          this.showSuccess('檢舉成功！該圖片已被刪除，下次將生成新圖片。');
+          // Hide the image immediately
+          const imageElement = document.getElementById('generatedImage');
+          if (imageElement) imageElement.style.display = 'none';
+        } else {
+          this.showSuccess('感謝回報！我們會記錄您的意見。');
+        }
+      } else {
+        if (data.message) this.showError(data.message);
+        else this.showError('檢舉失敗，請稍後再試');
+      }
+    } catch (e) {
+      console.error('Report failed:', e);
+      this.showError('網路發生錯誤');
+    } finally {
+      if (reportBtn) {
+        reportBtn.innerHTML = '<i class="fas fa-flag"></i> 已檢舉';
+        // Keep disabled to prevent spam
+      }
+    }
   }
 
   generateSeed(input) {
@@ -541,6 +583,19 @@ class KidsVocabularyGenerator {
       if (data.provider === 'github') aiProviderElement.innerHTML = '<i class="fab fa-github"></i> 圖書館藏書';
       else if (data.provider === 'backend') aiProviderElement.innerHTML = '<i class="fas fa-server"></i> 雲端生成';
       else aiProviderElement.innerHTML = '<i class="fas fa-robot"></i> AI 即時運算';
+
+      // Remove existing report button if any
+      const existingBtn = document.getElementById('reportImageBtn');
+      if (existingBtn) existingBtn.remove();
+
+      // Add Report Button
+      const reportBtn = document.createElement('button');
+      reportBtn.id = 'reportImageBtn';
+      reportBtn.className = 'btn btn-outline-danger btn-sm ms-2';
+      reportBtn.innerHTML = '<i class="fas fa-flag"></i> 檢舉';
+      reportBtn.title = '這張圖片不合適？點擊檢舉';
+      reportBtn.onclick = () => this.reportImage(input);
+      aiProviderElement.parentNode.appendChild(reportBtn);
     }
 
     const filename = input.length > 20 ? input.substring(0, 20) + '...' : input;

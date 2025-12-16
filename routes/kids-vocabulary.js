@@ -7,6 +7,7 @@ const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 const githubStorage = require('../src/services/github-storage');
+const reportService = require('../src/services/image-report-service');
 
 /**
  * GET /kids-vocabulary - 小學生單字生成器頁面
@@ -104,6 +105,37 @@ router.get('/random', (req, res) => {
 });
 
 /**
+ * POST /kids-vocabulary/report - 檢舉不當圖片
+ * Community Reporting System Endpoint
+ */
+router.post('/report', async (req, res) => {
+  const { word } = req.body;
+  const userIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+
+  if (!word) {
+    return res.status(400).json({ success: false, error: 'Missing word' });
+  }
+
+  try {
+    const result = await reportService.reportImage(word, userIp);
+
+    // If banned, perform deletion immediately
+    if (result.status === 'banned') {
+      // Background delete from GitHub to update fast
+      // Note: We don't await this to keep UI responsive, also frontend will reload
+      githubStorage.deleteImage(word, 'jpg')
+        .then(() => console.log(`🗑️ Banned image deleted for: ${word}`))
+        .catch(err => console.error(`❌ Delete banned image failed: ${err.message}`));
+    }
+
+    res.json({ success: true, ...result });
+  } catch (error) {
+    console.error('Report error:', error);
+    res.status(500).json({ success: false, error: 'Report failed' });
+  }
+});
+
+/**
  * POST /kids-vocabulary/generate - 生成圖片並存檔
  */
 router.post('/generate', async (req, res) => {
@@ -114,36 +146,40 @@ router.post('/generate', async (req, res) => {
 
   // 1. 生成 Prompt (與前端邏輯一致，確保風格統一)
   const safeInput = word.replace(/[^\w\s.,!?'-]/gi, '');
-  const prompt = `cute cartoon illustration of ${safeInput}, simple vector art, vibrant colors, for children educational material, white background, high quality, no guns, no blood, no violence, no nudity`;
+  const prompt = `cute cartoon illustration of ${safeInput}, safe for kids, G-rated, simple vector art, vibrant colors, for primary school educational material, white background, high quality, no guns, no blood, no violence, no nudity`;
 
-  // 生成 Seed (與前端一致)
+  // 2. Fetch Version for Seed (Community Reporting Integration)
+  const version = await reportService.getWordVersion(word);
+
+  // 3. 生成 Seed (Hash + Version)
   let seed = 0;
   const str = word.toLowerCase().trim();
   for (let i = 0; i < str.length; i++) {
     seed = ((seed << 5) - seed) + str.charCodeAt(i);
     seed = seed & seed;
   }
-  seed = Math.abs(seed);
+  seed = Math.abs(seed) + version; // Add version offset to force new image
 
   const negativePrompt = encodeURIComponent('nudity, violence, blood, guns, weapons, adult content, text, watermark');
   const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&model=flux&enhance=true&seed=${seed}&nologo=true&negative=${negativePrompt}`;
 
   try {
-    console.log(`🎨 Backend generating for: ${word} (${imageUrl})`);
+    console.log(`🎨 Backend generating for: ${word} (v${version})`);
 
-    // 2. 後端下載圖片 (Buffer)
+    // 4. 後端下載圖片 (Buffer)
     const response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
     const buffer = Buffer.from(response.data, 'binary');
 
-    // 3. 立即回傳給使用者 (Base64) - 讓用戶不用等 GitHub
+    // 5. 立即回傳給使用者 (Base64) - 讓用戶不用等 GitHub
     const base64Image = `data:image/jpeg;base64,${buffer.toString('base64')}`;
     res.json({
       success: true,
       image: base64Image, // 提供 Base64 直接顯示
-      source: 'backend-proxy'
+      source: 'backend-proxy',
+      version: version
     });
 
-    // 4. [背景任務] 上傳至 GitHub
+    // 6. [背景任務] 上傳至 GitHub
     // 不用 await，讓它在背景跑
     githubStorage.uploadImage(word, buffer, 'jpg')
       .then(url => {

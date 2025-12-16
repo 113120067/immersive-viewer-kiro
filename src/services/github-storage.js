@@ -130,6 +130,49 @@ class GitHubStorageService {
         // Format: https://{owner}.github.io/{repo}/{path}/{filename}
         return `https://${this.owner.toLowerCase()}.github.io/${this.repo}/${this.basePath}/${filename}`;
     }
+
+    /**
+     * Delete an image from GitHub (used when an image is reported/banned)
+     * @param {string} word - The word to identify the file
+     * @param {string} ext - Extension (default: jpg)
+     */
+    async deleteImage(word, ext = 'jpg') {
+        if (!this.init()) return false;
+
+        const hash = this.calculateHash(word);
+        const filename = `${hash}.${ext}`;
+        const path = `${this.basePath}/${filename}`;
+        const message = `Delete banned image for "${word}"`;
+
+        console.log(`🗑️ Deleting ${filename} from GitHub...`);
+
+        try {
+            // Need 'sha' to delete
+            const { data } = await this.octokit.repos.getContent({
+                owner: this.owner,
+                repo: this.repo,
+                path: path
+            });
+
+            await this.octokit.repos.deleteFile({
+                owner: this.owner,
+                repo: this.repo,
+                path: path,
+                message: message,
+                sha: data.sha,
+                committer: {
+                    name: 'KidsVocabBot',
+                    email: 'bot@kidsvocab.generated'
+                }
+            });
+
+            console.log(`✅ Delete successful: ${path}`);
+            return true;
+        } catch (error) {
+            console.error(`❌ GitHub Delete Failed for ${word}:`, error.message);
+            return false;
+        }
+    }
 }
 
 module.exports = new GitHubStorageService();
