@@ -502,7 +502,8 @@ class KidsVocabularyGenerator {
       wordMeaningElement.textContent = this.getSentenceDescription(input);
     }
 
-    aiProviderElement.innerHTML = '🌸 由免費 AI 生成';
+
+
 
     const filename = input.length > 20 ? input.substring(0, 20) + '...' : input;
     downloadLink.href = data.imageUrl;
@@ -978,22 +979,29 @@ class KidsVocabularyGenerator {
     utterance.onstart = () => {
       console.log('🔊 開始發音:', input);
       const pronounceBtn = document.getElementById('pronounceBtn');
-      pronounceBtn.innerHTML = '<i class="fas fa-volume-up me-1"></i>🔊 發音中...';
+      // 僅改變圖示或狀態，不改變原本的精簡佈局
+      pronounceBtn.innerHTML = '<i class="fas fa-volume-up fa-beat"></i>';
       pronounceBtn.disabled = true;
+      pronounceBtn.classList.remove('btn-primary');
+      pronounceBtn.classList.add('btn-success');
     };
 
     utterance.onend = () => {
       console.log('✅ 發音完成');
       const pronounceBtn = document.getElementById('pronounceBtn');
-      pronounceBtn.innerHTML = '<i class="fas fa-volume-up me-1"></i>🔊 發音';
+      pronounceBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
       pronounceBtn.disabled = false;
+      pronounceBtn.classList.add('btn-primary');
+      pronounceBtn.classList.remove('btn-success');
     };
 
     utterance.onerror = (error) => {
       console.error('❌ 發音錯誤:', error);
       const pronounceBtn = document.getElementById('pronounceBtn');
-      pronounceBtn.innerHTML = '<i class="fas fa-volume-up me-1"></i>🔊 發音';
+      pronounceBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
       pronounceBtn.disabled = false;
+      pronounceBtn.classList.add('btn-primary');
+      pronounceBtn.classList.remove('btn-success');
     };
 
     this.speechSynthesis.speak(utterance);

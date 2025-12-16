@@ -17,7 +17,7 @@ block content
               h5.fs-5.fs-md-4
                 | 👋 歡迎小朋友！
               p.mb-2.small.mb-md-2 輸入英文單字或句子，我會幫你畫一張可愛的圖片來學習！
-              p.mb-0.small.text-muted ✨ 完全免費使用，無需註冊登入
+              p.mb-0.small.text-muted ✨ 完全免費使用，無需註冊登入 🌸 由免費 AI 生成
             
             // 簡單輸入表單 - 移到最近學過內容之前
             form#simpleVocabForm
@@ -119,43 +119,46 @@ block content
       .col-12.col-lg-4.order-1.order-lg-2
         // 圖片顯示區域
         .card.border-primary
-          .card-header.bg-primary.text-white.text-center.py-2.py-md-3
+          .card-header.bg-primary.text-white.text-center.py-2.py-md-3.d-none.d-md-block
             h6.h5-md.mb-0
               | 🖼️ 你的圖片
           .card-body.text-center.p-2.p-md-3
             // 圖片顯示
             .image-result#imageResult(style="display: none")
-              .mb-2.mb-md-3
+              .mb-2.mb-md-3.position-relative
                 img#generatedImage.img-fluid.rounded.shadow(style="max-width: 100%; border: 2px solid #28a745;")
-              
-              .word-info.bg-light.p-2.p-md-3.rounded.mb-2.mb-md-3
-                h5.h4-md.text-success.mb-1#wordTitle 單字
-                p.text-muted.mb-2.small#wordMeaning 意思
                 
-                // 發音控制按鈕
-                .pronunciation-controls.mt-2
-                  .row.g-1.g-md-2
-                    .col-6
-                      button#pronounceBtn.btn.btn-primary.btn-sm.w-100.py-1.py-md-2(type="button")
-                        span 🔊 發音
-                    .col-6
-                      button#practiceBtn.btn.btn-warning.btn-sm.w-100.py-1.py-md-2(type="button" style="display: none")
-                        span 🎤 練習
+                // 懸浮下載按鈕 (手機版優化)
+                a#downloadLink.btn.btn-light.btn-sm.rounded-circle.shadow.position-absolute(
+                  download="my-word-image.png"
+                  style="bottom: 10px; right: 10px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; opacity: 0.9;"
+                  title="下載圖片"
+                )
+                  i.fas.fa-download.text-success
+
+              .word-info.bg-light.p-2.p-md-3.rounded.mb-0
+                .d-flex.justify-content-between.align-items-center.mb-2
+                    div
+                        h5.h4-md.text-success.mb-0#wordTitle 單字
+                        p.text-muted.mb-0.small#wordMeaning 意思
+                    div
+                        // 發音控制按鈕 (精簡版)
+                        button#pronounceBtn.btn.btn-primary.btn-sm.rounded-circle(type="button" style="width: 36px; height: 36px;")
+                             i.fas.fa-volume-up
                 
+                // 練習按鈕 (寬版)
+                button#practiceBtn.btn.btn-outline-warning.btn-sm.w-100.py-1(type="button" style="display: none")
+                    span 🎤 練習發音
+
                 // 練習發音結果
                 .practice-result.mt-2#practiceResult(style="display: none")
-                  .alert.alert-info.small.mb-0.py-1.py-md-2
+                  .alert.alert-info.small.mb-0.py-1
                     .d-flex.align-items-center
                       .spinner-border.spinner-border-sm.me-2#practiceSpinner(style="display: none")
-                      span#practiceText.small 點擊麥克風開始練習發音...
+                      span#practiceText.small 點擊麥克風開始練習...
               
-              .mb-2.mb-md-3
+              .mb-0
                 small.text-muted#aiProvider 
-                  | 🤖 由 AI 生成
-              
-              .d-grid
-                a#downloadLink.btn.btn-outline-success.btn-sm(download="my-word-image.png")
-                  span 📥 下載圖片
             
             // 佔位符
             .placeholder-content#placeholderContent
