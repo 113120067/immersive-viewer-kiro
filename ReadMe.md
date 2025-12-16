@@ -277,3 +277,44 @@ npm run test:e2e
 ---
 
 ⭐ 如果這個專案對你有幫助，請給個星星支持！
+
+---
+
+## 📦 GitHub 圖庫部署與設定 (Kids Vocabulary)
+
+為了讓「小學生單字生成器」能夠永久儲存圖片並節省生成成本，本專案整合了 **GitHub Repository + GitHub Pages** 作為免費圖庫。請依照以下步驟設定：
+
+### 1. 準備 GitHub Repository
+您可以直接使用本專案的 Repo，或是建立一個全新的 Repo (例如 `vocabulary-images`) 來專門存圖。
+
+### 2. 申請 Personal Access Token (PAT)
+由於後端需要上傳圖片，必須提供權限憑證：
+1.  前往 [GitHub Settings > Developer settings > Personal access tokens > Tokens (classic)](https://github.com/settings/tokens).
+2.  點擊 **Generate new token (classic)**。
+3.  **Scopes** (權限) 務必勾選：
+    *   `repo` (包含 `public_repo` 等，用於上傳檔案)。
+4.  複製產生的 Token (開頭通常是 `ghp_...`)。
+
+### 3. 設定環境變數
+在 `.env` 檔案中加入以下設定：
+```env
+GITHUB_TOKEN=ghp_你的Token
+GITHUB_OWNER=你的GitHub帳號
+GITHUB_REPO=你的Repo名稱 (例如 immersive-viewer-antigrovity)
+GITHUB_PATH=public/library  # 圖片存放路徑 (預設建議)
+```
+> ⚠️ **安全性提醒**：`GITHUB_TOKEN` 只能放在後端伺服器的環境變數中，**絕對不要** 暴露在前端程式碼或 `.env.example` 中。
+
+### 4. 啟用 GitHub Pages (關鍵步驟)
+為了讓前端能透過 CDN 快速讀取圖片，必須開啟 Pages 功能：
+1.  進入 Repo 的 **Settings** 頁面。
+2.  左側選單點擊 **Pages**。
+3.  **Build and deployment > Source** 選擇 `Deploy from a branch`。
+4.  **Branch** 選擇 `main` (或 master)，資料夾選擇 `/ (root)`。
+5.  點擊 **Save**。
+
+### ✅ 驗證方式
+完成後，當您在網站上生成一個新單字 (例如 "apple")：
+1.  系統會自動將圖片上傳到 Repo 的 `public/library/` 資料夾。
+2.  等待約 1-2 分鐘 (GitHub Pages 部署時間)。
+3.  下次其他人輸入 "apple" 時，系統會有 100% 的速度優勢，直接從 `https://{帳號}.github.io/{Repo}/public/library/{hash}.jpg` 讀取圖片，速度極快且不消耗 AI 額度！

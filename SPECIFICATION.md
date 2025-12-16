@@ -369,51 +369,92 @@ npm start
 - `auto`: `true` | `false` (自動發音開關)
 - 範例: `.../kids-vocabulary?words=apple,banana,cat&mode=quiz`
 
-## 5. 第二圖源整合 (Second Image Source) - [待開發/Pending]
+## 5. 第二圖源整合 (Second Image Source) - 為真實認知而生
 
-### 5.1 功能概述 (Draft Proposal)
-為解決 AI 生產不穩定或過濾過嚴的問題，計畫引入 **Unsplash (真實照片)** 或 **Bing 圖片搜尋** 作為第二圖源。
-(目前處於評估階段，尚未實作)
+### 5.1 核心目標 (Core Objective)
+為了解決 AI 生成圖片偶爾過於抽象、或無法準確呈現特定現實物體（如特定動物、地標）的問題，引入 **Unsplash (真實照片)** 作為第二圖源。
+這將允許使用者在「🎨 創意想像 (AI)」與「📸 真實認知 (Real Photo)」之間自由切換。
 
-### 5.2 候選方案
-- **Unsplash**: 真實照片，API 簡單，免費額度 50 req/hr。
-- **Bing Image Search**: 全網搜尋，最強大，需 Azure 帳號。
+### 5.2 使用者介面設計 (UI/UX)
+在輸入框與生成按鈕之間（或附近），新增一個顯眼的模式切換器：
 
-### 5.2 介面設計 (UI Layout)
-在「生成圖片!」按鈕上方或輸入框附近，新增一個顯眼的切換開關 (Toggle)：
-- **[🎨 AI 卡通] (預設)**：使用 Pollinations AI，適合句子、創意內容。
-- **[📸 真實照片]**：使用 Unsplash API，適合單字、認知教學。
+- **UI 元件**: 
+  - **切換開關 (Segmented Control / Toggle)**
+  - 選項 A: `🎨 AI 卡通` (預設, Pollinations, 適合句子/故事)
+  - 選項 B: `📸 真實照片` (Unsplash, 適合單字/生物/物體)
 
-### 5.3 技術架構重構 (Refactoring)
-採用 **策略模式 (Strategy Pattern)** 重構 `KidsVocabularyGenerator` 的圖片生成邏輯。
+- **互動行為**:
+  - 切換至「真實照片」時，輸入框提示改為「建議輸入單一單字 (例: Fox, Apple)...」
+  - 若使用者在「真實照片」模式輸入過長句子，顯示黃色提示：「真實照片模式適合單字搜尋喔！」
 
-```javascript
-// ImageStrategy 介面概觀
-class ImageStrategy {
-    generate(input): Promise<{ url: string, provider: string }>
-}
+### 5.3 技術架構：策略模式 (Strategy Pattern)
+重構 `KidsVocabularyGenerator`，將圖片獲取邏輯抽離為獨立策略。
 
-// 策略 A: Pollinations (Existing)
-class PollinationsStrategy extends ImageStrategy { ... }
-
-// 策略 B: Unsplash (New)
-class UnsplashStrategy extends ImageStrategy {
-    constructor(accessKey) { ... }
-    generate(input) {
-        // GET https://api.unsplash.com/search/photos?query={input}&per_page=1
-        // Return first image result
+```mermaid
+classDiagram
+    class KidsVocabGenerator {
+        -strategy: ImageProviderStrategy
+        +setStrategy(mode)
+        +generate(input)
     }
-}
+    class ImageProviderStrategy {
+        <<interface>>
+        +generateImage(input): Promise<Result>
+    }
+    class PollinationsStrategy {
+        +generateImage(input)
+    }
+    class UnsplashStrategy {
+        +generateImage(input)
+    }
+    
+    KidsVocabGenerator --> ImageProviderStrategy
+    ImageProviderStrategy <|.. PollinationsStrategy
+    ImageProviderStrategy <|.. UnsplashStrategy
 ```
 
-### 5.4 Unsplash API 需求
-- **Endpoint**: `https://api.unsplash.com/search/photos`
-- **Auth**: 需要 Access Key (Client ID)
-- **Rate Limit**: Demo key 限制 50 request/hour (對課堂可能不夠，需注意)
-- **Fallback**: 若 Rate Limit 到達，顯示提示訊息或 fallback 至 AI。
+### 5.4 後端代理設計 (Backend Proxy) - 安全性關鍵 🔒
+由於 Unsplash API 需要 Access Key，且免費額度有限 (Demo: 50 req/hr)，**嚴禁**將 Key 暴露在前端 JavaScript 中。
 
-### 5.5 實作步驟
-1.  **Refactor**: 抽離 `generatePollinationsUrl` 邏輯至獨立 class 或 method。
-2.  **UI**: 新增 Toggle Switch。
-3.  **API**: 實作 Unsplash Fetch 邏輯。
-4.  **Error Handling**: 當 Unsplash 找不到圖 (如輸入句子) 時的處理 (提示用戶「真實照片模式僅支援單字」)。
+#### 5.4.1 API Endpoint
+- **路徑**: `GET /api/images/search`
+- **參數**: 
+  - `q`: 搜尋關鍵字 (String)
+  - `source`: `unsplash` (預留未來擴充)
+- **回應**:
+  ```json
+  {
+    "success": true,
+    "imageUrl": "https://images.unsplash.com/photo-xxx...",
+    "provider": "unsplash",
+    "photographer": "John Doe",
+    "photographerUrl": "https://unsplash.com/@johndoe"
+  }
+  ```
+
+#### 5.4.2 後端邏輯 (Node.js/Express)
+1. **驗證**: 檢查請求來源/頻率 (Rate Limiting)。
+2. **快取 (Caching)**: **關鍵功能**。
+   - 使用 `node-cache` 或簡單記憶體快取。
+   - Key: `unsplash_query_${keyword}`
+   - TTL: 24小時 (相同的單字如 "apple" 一天內只打一次 Unsplash API)。
+   - **目的**: 大幅節省 API 額度，單字量通常有限，快取命中率高。
+3. **API 呼叫**: 使用 `node-fetch` 呼叫 Unsplash API。
+4. **錯誤處理**: 若 Unsplash 額度用盡或失敗，回傳特定錯誤代碼，前端自動切換回 AI 模式或顯示提示。
+
+### 5.5 實作計畫 (Implementation Plan)
+
+#### Phase 1: 後端基礎
+1.  申請 Unsplash Developer Account 獲取 Access Key。
+2.  在 `.env` 加入 `UNSPLASH_ACCESS_KEY`。
+3.  建立 `routes/api.js` (或擴充 existing routes) 實作 Proxy & Cache。
+
+#### Phase 2: 前端重構
+1.  建立 `strategies/ImageStrategies.js` 模組。
+2.  實作 `PollinationsStrategy` (原邏輯) 與 `UnsplashStrategy` (呼叫後端)。
+3.  修改 `KidsVocabularyGenerator` 支援策略切換。
+
+#### Phase 3: UI 整合
+1.  在 `kids-vocabulary.pug` 加入切換按鈕。
+2.  在 `kids-vocabulary.js` 綁定切換事件。
+3.  顯示 Unsplash 規範要求的「Photo by [User] on Unsplash」來源標示。

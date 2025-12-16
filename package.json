@@ -9,6 +9,7 @@
     "@azure/cognitiveservices-computervision": "^8.2.0",
     "@azure/ms-rest-azure-js": "^2.1.0",
     "@google/generative-ai": "^0.24.1",
+    "@octokit/rest": "^22.0.1",
     "axios": "^1.8.2",
     "cookie-parser": "~1.4.4",
     "debug": "~2.6.9",

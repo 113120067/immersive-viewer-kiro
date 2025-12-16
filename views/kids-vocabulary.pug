@@ -92,6 +92,11 @@ block content
               input#levelSelect(type="hidden" value="beginner")
               input#techniqueSelect(type="hidden" value="story")
               input#includeTextCheck(type="hidden" value="true")
+              // GitHub Storage Config
+              if githubOwner && githubRepo
+                input#githubOwner(type="hidden" value=githubOwner)
+                input#githubRepo(type="hidden" value=githubRepo)
+                input#githubPath(type="hidden" value=githubPath)
             
             // 最近學過的內容 - 放在輸入表單之後
             .card.mb-3.mb-md-4.border-info
@@ -637,6 +642,7 @@ block content
       /* 防止 iOS 縮放 */
       input[type="text"] {
         font-size: 16px !important;
+        //- text-align: center; // Remove this because it might conflict with placeholders
       }
       
       /* iOS 按鈕樣式重置 */
@@ -761,23 +767,6 @@ block content
       font-size: 11px;
       line-height: 1.1;
     }
-    
-
-      
-      .recent-word-item {
-        padding: 10px 12px;
-        font-size: 14px;
-        border-radius: 8px;
-        margin-bottom: 8px;
-        border-width: 2px;
-        min-height: 40px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-      }
-    }
-
     
     /* 桌面版圖片樣式 */
     @media (min-width: 992px) {
@@ -944,8 +933,6 @@ block content
       .alert p {
         font-size: 14px !important;
       }
-      
-
     }
 
 block scripts

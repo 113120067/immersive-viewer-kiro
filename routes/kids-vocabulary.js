@@ -5,13 +5,18 @@
 
 const express = require('express');
 const router = express.Router();
+const axios = require('axios');
+const githubStorage = require('../src/services/github-storage');
 
 /**
  * GET /kids-vocabulary - 小學生單字生成器頁面
  */
 router.get('/', (req, res) => {
-  res.render('kids-vocabulary', { 
-    title: '小學生英文學習圖片生成器 - 免費無需登入'
+  res.render('kids-vocabulary', {
+    title: '小學生英文學習圖片生成器 - 免費無需登入',
+    githubOwner: process.env.GITHUB_OWNER,
+    githubRepo: process.env.GITHUB_REPO,
+    githubPath: process.env.GITHUB_PATH || 'public/library'
   });
 });
 
@@ -91,11 +96,67 @@ router.get('/random', (req, res) => {
   ];
 
   const randomWord = allWords[Math.floor(Math.random() * allWords.length)];
-  
+
   res.json({
     success: true,
     word: randomWord
   });
+});
+
+/**
+ * POST /kids-vocabulary/generate - 生成圖片並存檔
+ */
+router.post('/generate', async (req, res) => {
+  const { word } = req.body;
+  if (!word) {
+    return res.status(400).json({ success: false, error: '缺少單字' });
+  }
+
+  // 1. 生成 Prompt (與前端邏輯一致，確保風格統一)
+  const safeInput = word.replace(/[^\w\s.,!?'-]/gi, '');
+  const prompt = `cute cartoon illustration of ${safeInput}, simple vector art, vibrant colors, for children educational material, white background, high quality, no guns, no blood, no violence, no nudity`;
+
+  // 生成 Seed (與前端一致)
+  let seed = 0;
+  const str = word.toLowerCase().trim();
+  for (let i = 0; i < str.length; i++) {
+    seed = ((seed << 5) - seed) + str.charCodeAt(i);
+    seed = seed & seed;
+  }
+  seed = Math.abs(seed);
+
+  const negativePrompt = encodeURIComponent('nudity, violence, blood, guns, weapons, adult content, text, watermark');
+  const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&model=flux&enhance=true&seed=${seed}&nologo=true&negative=${negativePrompt}`;
+
+  try {
+    console.log(`🎨 Backend generating for: ${word} (${imageUrl})`);
+
+    // 2. 後端下載圖片 (Buffer)
+    const response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+    const buffer = Buffer.from(response.data, 'binary');
+
+    // 3. 立即回傳給使用者 (Base64) - 讓用戶不用等 GitHub
+    const base64Image = `data:image/jpeg;base64,${buffer.toString('base64')}`;
+    res.json({
+      success: true,
+      image: base64Image, // 提供 Base64 直接顯示
+      source: 'backend-proxy'
+    });
+
+    // 4. [背景任務] 上傳至 GitHub
+    // 不用 await，讓它在背景跑
+    githubStorage.uploadImage(word, buffer, 'jpg')
+      .then(url => {
+        if (url) console.log(`✅ Background upload complete: ${url}`);
+      })
+      .catch(err => {
+        console.error(`❌ Background upload failed: ${err.message}`);
+      });
+
+  } catch (error) {
+    console.error('Generation error:', error.message);
+    res.status(500).json({ success: false, error: '圖片生成失敗' });
+  }
 });
 
 module.exports = router;
