@@ -368,3 +368,52 @@ npm start
 - `mode`: `practice` (預設) | `quiz` (隱藏意思)
 - `auto`: `true` | `false` (自動發音開關)
 - 範例: `.../kids-vocabulary?words=apple,banana,cat&mode=quiz`
+
+## 5. 第二圖源整合 (Second Image Source) - [待開發/Pending]
+
+### 5.1 功能概述 (Draft Proposal)
+為解決 AI 生產不穩定或過濾過嚴的問題，計畫引入 **Unsplash (真實照片)** 或 **Bing 圖片搜尋** 作為第二圖源。
+(目前處於評估階段，尚未實作)
+
+### 5.2 候選方案
+- **Unsplash**: 真實照片，API 簡單，免費額度 50 req/hr。
+- **Bing Image Search**: 全網搜尋，最強大，需 Azure 帳號。
+
+### 5.2 介面設計 (UI Layout)
+在「生成圖片!」按鈕上方或輸入框附近，新增一個顯眼的切換開關 (Toggle)：
+- **[🎨 AI 卡通] (預設)**：使用 Pollinations AI，適合句子、創意內容。
+- **[📸 真實照片]**：使用 Unsplash API，適合單字、認知教學。
+
+### 5.3 技術架構重構 (Refactoring)
+採用 **策略模式 (Strategy Pattern)** 重構 `KidsVocabularyGenerator` 的圖片生成邏輯。
+
+```javascript
+// ImageStrategy 介面概觀
+class ImageStrategy {
+    generate(input): Promise<{ url: string, provider: string }>
+}
+
+// 策略 A: Pollinations (Existing)
+class PollinationsStrategy extends ImageStrategy { ... }
+
+// 策略 B: Unsplash (New)
+class UnsplashStrategy extends ImageStrategy {
+    constructor(accessKey) { ... }
+    generate(input) {
+        // GET https://api.unsplash.com/search/photos?query={input}&per_page=1
+        // Return first image result
+    }
+}
+```
+
+### 5.4 Unsplash API 需求
+- **Endpoint**: `https://api.unsplash.com/search/photos`
+- **Auth**: 需要 Access Key (Client ID)
+- **Rate Limit**: Demo key 限制 50 request/hour (對課堂可能不夠，需注意)
+- **Fallback**: 若 Rate Limit 到達，顯示提示訊息或 fallback 至 AI。
+
+### 5.5 實作步驟
+1.  **Refactor**: 抽離 `generatePollinationsUrl` 邏輯至獨立 class 或 method。
+2.  **UI**: 新增 Toggle Switch。
+3.  **API**: 實作 Unsplash Fetch 邏輯。
+4.  **Error Handling**: 當 Unsplash 找不到圖 (如輸入句子) 時的處理 (提示用戶「真實照片模式僅支援單字」)。
