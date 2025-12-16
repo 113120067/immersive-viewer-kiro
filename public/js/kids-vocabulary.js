@@ -337,6 +337,9 @@ class KidsVocabularyGenerator {
             console.log('✅ GitHub Cache Hit!');
             this.showResult({ imageUrl: githubUrl, provider: 'github' }, input);
 
+            // 自動發音
+            this.speak(input);
+
             // 快取命中，快速冷卻
             this.quickCooldown();
             this.isGenerating = false;
@@ -361,6 +364,9 @@ class KidsVocabularyGenerator {
             console.log('✅ Backend generation success');
             this.showResult({ imageUrl: backendData.image, provider: 'backend' }, input);
             this.addToRecentWords(input, backendData.image);
+
+            // 自動發音
+            this.speak(input);
 
             this.isGenerating = false;
             this.showGenerationStatus(false);
