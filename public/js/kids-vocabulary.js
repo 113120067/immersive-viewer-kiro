@@ -21,7 +21,148 @@ class KidsVocabularyGenerator {
     this.init();
   }
 
-  // ... (init, showWelcomeMessage, initializeSpeechFeatures, setupEventListeners methods remain unchanged)
+  init() {
+    this.showWelcomeMessage();
+    this.initializeSpeechFeatures();
+    this.setupEventListeners();
+    this.loadRecentWords();
+    this.loadSpeechSettings();
+  }
+
+  showWelcomeMessage() {
+    const welcomeMsg = document.getElementById('welcomeMessage');
+    if (welcomeMsg) {
+      setTimeout(() => {
+        welcomeMsg.style.opacity = '1';
+      }, 500);
+    }
+  }
+
+  initializeSpeechFeatures() {
+    // 初始化語音識別
+    if ('webkitSpeechRecognition' in window) {
+      this.speechRecognition = new webkitSpeechRecognition();
+      this.speechRecognition.continuous = false;
+      this.speechRecognition.interimResults = false;
+      this.speechRecognition.lang = 'en-US';
+
+      this.speechRecognition.onstart = () => {
+        this.isListening = true;
+        this.updatePracticeUI();
+      };
+
+      this.speechRecognition.onend = () => {
+        this.isListening = false;
+        this.updatePracticeUI();
+      };
+
+      this.speechRecognition.onresult = (event) => {
+        const result = event.results[0][0].transcript;
+        this.handleSpeechResult(result);
+      };
+
+      this.speechRecognition.onerror = (event) => {
+        console.error('Speech recognition error', event.error);
+        this.isListening = false;
+        this.updatePracticeUI();
+        if (event.error === 'not-allowed') {
+          this.showError('請允許使用麥克風才能練習發音喔！');
+        }
+      };
+    } else {
+      const practiceBtn = document.getElementById('practiceBtn');
+      if (practiceBtn) {
+        practiceBtn.style.display = 'none';
+      }
+    }
+  }
+
+  setupEventListeners() {
+    // 綁定生成按鈕事件
+    const btnMobile = document.getElementById('generateBtn');
+    const btnDesktop = document.getElementById('generateBtnDesktop');
+
+    if (btnMobile) {
+      btnMobile.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.generateImage();
+      });
+    }
+
+    if (btnDesktop) {
+      btnDesktop.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.generateImage();
+      });
+    }
+
+    // 綁定輸入框 Enter 事件
+    const inputMobile = document.getElementById('wordInput');
+    const inputDesktop = document.getElementById('wordInputDesktop');
+
+    const handleEnter = (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        this.generateImage();
+      }
+    };
+
+    if (inputMobile) inputMobile.addEventListener('keypress', handleEnter);
+    if (inputDesktop) inputDesktop.addEventListener('keypress', handleEnter);
+
+    // 語音功能相關事件
+    const pronounceBtn = document.getElementById('pronounceBtn');
+    if (pronounceBtn) {
+      pronounceBtn.addEventListener('click', () => {
+        if (this.currentWord) {
+          this.pronounceWord(this.currentWord);
+        }
+      });
+    }
+
+    const practiceBtn = document.getElementById('practiceBtn');
+    if (practiceBtn) {
+      practiceBtn.addEventListener('click', () => {
+        if (this.isListening) {
+          this.stopListening();
+        } else {
+          this.startListening();
+        }
+      });
+    }
+
+    // 設定選項事件
+    const pronunciationToggle = document.getElementById('pronunciationToggle');
+    if (pronunciationToggle) {
+      pronunciationToggle.addEventListener('change', (e) => {
+        localStorage.setItem('kidsPronunciationEnabled', e.target.checked);
+      });
+    }
+
+    const practiceToggle = document.getElementById('practiceToggle');
+    if (practiceToggle) {
+      practiceToggle.addEventListener('change', (e) => {
+        localStorage.setItem('kidsPracticeEnabled', e.target.checked);
+        const practiceBtn = document.getElementById('practiceBtn');
+        const practiceResult = document.getElementById('practiceResult');
+
+        if (practiceBtn) {
+          practiceBtn.style.display = e.target.checked ? 'block' : 'none';
+        }
+        if (practiceResult && !e.target.checked) {
+          practiceResult.style.display = 'none';
+        }
+      });
+    }
+
+    const speechSpeedSlider = document.getElementById('speechSpeedSlider');
+    if (speechSpeedSlider) {
+      speechSpeedSlider.addEventListener('input', (e) => {
+        localStorage.setItem('kidsSpeechSpeed', e.target.value);
+        this.updateSpeedDisplay();
+      });
+    }
+  }
 
   async generateImage() {
     console.log('🎨 generateImage 方法被調用');
