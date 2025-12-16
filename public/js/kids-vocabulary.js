@@ -162,6 +162,37 @@ class KidsVocabularyGenerator {
         this.updateSpeedDisplay();
       });
     }
+
+    // 綁定快速單字卡 (Quick Chips) 點擊事件
+    const quickChips = document.querySelectorAll('.quick-chip');
+    quickChips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        const word = chip.dataset.word;
+        if (word) {
+          const input = window.innerWidth < 576 ?
+            document.getElementById('wordInput') :
+            document.getElementById('wordInputDesktop');
+
+          if (input) {
+            input.value = word;
+            this.generateImage();
+          }
+        }
+      });
+    });
+
+    // 綁定清除按鈕
+    const clearBtns = document.querySelectorAll('.btn-clear-input');
+    clearBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const inputId = btn.dataset.target;
+        const input = document.getElementById(inputId);
+        if (input) {
+          input.value = '';
+          input.focus();
+        }
+      });
+    });
   }
 
   async generateImage() {
@@ -202,8 +233,17 @@ class KidsVocabularyGenerator {
       return;
     }
 
-    if (!/^[a-zA-Z\s.,!?'-]+$/.test(input)) {
-      this.showError('請只輸入英文字母和基本標點符號！');
+    // 1. 寬鬆的字元檢查：允許英文、數字、常見標點符號
+    // 允許的符號: . , ! ? ' " - ; : ( )
+    if (!/^[a-zA-Z0-9\s.,!?'";:()\-]+$/.test(input)) {
+      this.showError('請只輸入英文、數字和常見標點符號！');
+      return;
+    }
+
+    // 2. 內容意義檢查：確保至少包含一個英文字母
+    // 避免只輸入 "123" 或 "!!!" 這種無意義內容
+    if (!/[a-zA-Z]/.test(input)) {
+      this.showError('請至少包含一個英文字母喔！');
       return;
     }
 

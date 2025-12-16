@@ -27,11 +27,21 @@ block content
                 
                 // 手機版：輸入框和按鈕分開排列
                 .d-block.d-sm-none
-                  input#wordInput.form-control.form-control-lg.mb-3(
-                    type="text" 
-                    placeholder="例如：apple, I am happy..."
-                    required
-                  )
+                  .position-relative.mb-3
+                    input#wordInput.form-control.form-control-lg(
+                      type="text" 
+                      placeholder="例如：apple, I am happy..."
+                      required
+                      spellcheck="true"
+                      style="padding-right: 40px;"
+                    )
+                    button.btn.btn-link.text-muted.position-absolute.btn-clear-input(
+                      type="button"
+                      data-target="wordInput"
+                      style="right: 5px; top: 50%; transform: translateY(-50%); text-decoration: none; font-size: 1.2rem;"
+                    )
+                      i.fas.fa-times-circle
+                  
                   .d-grid
                     button#generateBtn.btn.btn-success.btn-lg(
                       type="submit"
@@ -46,22 +56,31 @@ block content
                     type="text" 
                     placeholder="例如：apple, I am happy..."
                     required
+                    spellcheck="true"
                   )
+                  button.btn.btn-outline-secondary.border-end-0.border-start-0.btn-clear-input(
+                    type="button"
+                    data-target="wordInputDesktop"
+                    title="清除內容"
+                  )
+                    i.fas.fa-times
                   button#generateBtnDesktop.btn.btn-success.btn-lg.px-2.px-md-3(
                     type="submit"
                     style="-webkit-appearance: none; -webkit-tap-highlight-color: transparent;"
                     ontouchstart=""
                   )
                     span 🎨 生成圖片！
-                .form-text.mt-2.small
-                  .d-block.d-md-none
-                    | 💡 apple, dog, smile
-                    br
-                    | 💬 I am happy
-                  .d-none.d-md-block
-                    | 💡 單字：apple, dog, smile, house, book
-                    br
-                    | 💬 句子：I am happy, good morning, I like cats
+                
+                // 快速單字卡 (Quick Chips)
+                .quick-chips-container.mt-3
+                  .d-flex.flex-wrap.gap-2.justify-content-center
+                    button.btn.btn-outline-primary.btn-sm.rounded-pill.quick-chip(type="button" data-word="apple") 🍎 Apple
+                    button.btn.btn-outline-warning.btn-sm.rounded-pill.quick-chip(type="button" data-word="cat") 🐱 Cat
+                    button.btn.btn-outline-info.btn-sm.rounded-pill.quick-chip(type="button" data-word="dog") 🐶 Dog
+                    button.btn.btn-outline-success.btn-sm.rounded-pill.quick-chip(type="button" data-word="tree") 🌳 Tree
+                    button.btn.btn-outline-danger.btn-sm.rounded-pill.quick-chip(type="button" data-word="flower") 🌸 Flower
+                    button.btn.btn-outline-secondary.btn-sm.rounded-pill.quick-chip(type="button" data-word="I am happy") 😊 I am happy
+                    button.btn.btn-outline-dark.btn-sm.rounded-pill.quick-chip(type="button" data-word="3 little pigs") 🐷 3 Little Pigs
               
 
               
