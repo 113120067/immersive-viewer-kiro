@@ -21,6 +21,7 @@ class KidsVocabularyGenerator {
     // GitHub Storage Config
     this.githubConfig = null;
 
+    this.voices = [];
     this.init();
     this.isLoadingImage = false;
   }
@@ -88,6 +89,16 @@ class KidsVocabularyGenerator {
 
   initializeSpeechFeatures() {
     // 初始化語音識別
+    if ('speechSynthesis' in window) {
+      // Chrome 載入語音是異步的，需要監聽改變
+      window.speechSynthesis.onvoiceschanged = () => {
+        this.voices = window.speechSynthesis.getVoices();
+        console.log(`🎤 語音包已載入: ${this.voices.length} 個語音可用`);
+      };
+      // 嘗試立即獲取
+      this.voices = window.speechSynthesis.getVoices();
+    }
+
     if ('webkitSpeechRecognition' in window) {
       this.speechRecognition = new webkitSpeechRecognition();
       this.speechRecognition.continuous = false;
@@ -689,40 +700,91 @@ class KidsVocabularyGenerator {
       this.showError('您的瀏覽器不支援語音功能');
       return;
     }
+
+    console.log(`🔊 準備發音: "${input}"`);
+
+    // 確保語音列表已載入
+    if (this.voices.length === 0) {
+      this.voices = this.speechSynthesis.getVoices();
+      console.log('🎤 重新嘗試獲取語音列表:', this.voices.length);
+    }
+
     this.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(input);
     utterance.lang = 'en-US';
+
     const speedSlider = document.getElementById('speechSpeedSlider');
     const userSpeed = speedSlider ? parseFloat(speedSlider.value) : 0.8;
     utterance.rate = userSpeed;
     utterance.pitch = 1.1;
-    utterance.volume = 0.8;
-    const voices = this.speechSynthesis.getVoices();
-    const englishVoice = voices.find(voice => voice.lang.startsWith('en') && (voice.name.includes('Female') || voice.name.includes('Google'))) || voices.find(voice => voice.lang.startsWith('en'));
-    if (englishVoice) utterance.voice = englishVoice;
+    utterance.volume = 1.0; // 確保最大音量
+
+    // 尋找最佳英語聲音
+    let englishVoice = null;
+
+    // 1. 優先找 Google US English (品質較好)
+    englishVoice = this.voices.find(v => v.name.includes('Google US English'));
+
+    // 2. 其次找任何包含 Female 的英語
+    if (!englishVoice) {
+      englishVoice = this.voices.find(v => v.lang.startsWith('en') && v.name.toLowerCase().includes('female'));
+    }
+
+    // 3. 最後找任何英語
+    if (!englishVoice) {
+      englishVoice = this.voices.find(v => v.lang.startsWith('en'));
+    }
+
+    if (englishVoice) {
+      utterance.voice = englishVoice;
+      console.log(`🗣️ 使用語音: ${englishVoice.name}`);
+    } else {
+      console.warn('⚠️ 找不到英語語音，使用預設語音');
+    }
+
     utterance.onstart = () => {
+      console.log('✅ 發音開始');
       const pronounceBtn = document.getElementById('pronounceBtn');
-      pronounceBtn.innerHTML = '<i class="fas fa-volume-up fa-beat"></i>';
-      pronounceBtn.disabled = true;
-      pronounceBtn.classList.remove('btn-primary');
-      pronounceBtn.classList.add('btn-success');
+      if (pronounceBtn) {
+        pronounceBtn.innerHTML = '<i class="fas fa-volume-up fa-beat"></i>';
+        pronounceBtn.disabled = true;
+        pronounceBtn.classList.remove('btn-primary');
+        pronounceBtn.classList.add('btn-success');
+      }
     };
+
     utterance.onend = () => {
+      console.log('✅ 發音結束');
       const pronounceBtn = document.getElementById('pronounceBtn');
-      pronounceBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
-      pronounceBtn.disabled = false;
-      pronounceBtn.classList.add('btn-primary');
-      pronounceBtn.classList.remove('btn-success');
+      if (pronounceBtn) {
+        pronounceBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+        pronounceBtn.disabled = false;
+        pronounceBtn.classList.add('btn-primary');
+        pronounceBtn.classList.remove('btn-success');
+      }
     };
+
     utterance.onerror = (error) => {
       console.error('❌ 發音錯誤:', error);
+      // 詳細錯誤記錄
+      if (error.error === 'not-allowed') {
+        console.error('⚠️ 發音被瀏覽器阻擋 (Autoplay Policy). 使用者必須先與頁面互動。');
+      }
+
       const pronounceBtn = document.getElementById('pronounceBtn');
-      pronounceBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
-      pronounceBtn.disabled = false;
-      pronounceBtn.classList.add('btn-primary');
-      pronounceBtn.classList.remove('btn-success');
+      if (pronounceBtn) {
+        pronounceBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+        pronounceBtn.disabled = false;
+        pronounceBtn.classList.add('btn-primary');
+        pronounceBtn.classList.remove('btn-success');
+      }
     };
-    this.speechSynthesis.speak(utterance);
+
+    try {
+      this.speechSynthesis.speak(utterance);
+    } catch (e) {
+      console.error('❌ speak() 方法呼叫失敗:', e);
+    }
   }
 
   startListening() {
