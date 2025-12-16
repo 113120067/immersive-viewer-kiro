@@ -151,6 +151,26 @@ class KidsVocabularyGenerator {
   }
 
   /**
+   * 快速冷卻 (當重複單字或快取命中時觸發)
+   * 將剩餘等待時間縮短，改善體驗
+   */
+  quickCooldown() {
+    // 只有在還在冷卻中才調整
+    if (this.isCoolingDown) {
+      this.cooldownSeconds = 3; // 縮短為 3 秒
+      this.showSuccess('⚡ 圖片秒開！已為您加速冷卻時間！');
+
+      const btnMobile = document.getElementById('generateBtn');
+      const btnDesktop = document.getElementById('generateBtnDesktop');
+
+      // 更新按鈕文字提示用戶
+      const text = `⚡ 速通! ${this.cooldownSeconds}s`;
+      if (btnMobile) btnMobile.innerHTML = text;
+      if (btnDesktop) btnDesktop.innerHTML = text;
+    }
+  }
+
+  /**
    * 生成適合小朋友的 Prompt
    */
   generateKidsPrompt(input) {
@@ -209,6 +229,9 @@ class KidsVocabularyGenerator {
 
     console.log('🖼️ 開始載入圖片:', data.imageUrl);
 
+    // 記錄開始載入的時間，用於判斷是否為快取命中
+    const startTime = Date.now();
+
     let imageLoadTimeout;
     let retryCount = 0;
     const maxRetries = 3;
@@ -217,12 +240,21 @@ class KidsVocabularyGenerator {
       console.log(`🔄 嘗試載入圖片 (第 ${retryCount + 1} 次):`, url);
 
       imageElement.onload = () => {
-        console.log('✅ 圖片載入成功');
+        const loadTime = Date.now() - startTime;
+        console.log(`✅ 圖片載入成功，耗時: ${loadTime}ms`);
+
         if (imageLoadTimeout) clearTimeout(imageLoadTimeout);
         this.handlePronunciation(input);
 
         // 圖片真正載入完成後才顯示成功訊息
         this.showSuccess(`太棒了！"${input}" 的圖片生成完成！`);
+
+        // 🟢 智慧型冷卻邏輯 (Smart Cooldown)
+        // 如果載入時間小於 3000ms (3秒)，代表是快取命中 (Cache Hit)
+        if (loadTime < 3000) {
+          console.log('⚡ 快取命中！觸發快速冷卻');
+          this.quickCooldown();
+        }
       };
 
       imageElement.onerror = () => {
