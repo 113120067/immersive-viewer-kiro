@@ -299,7 +299,7 @@ npm run test:e2e
 在 `.env` 檔案中加入以下設定：
 ```env
 GITHUB_TOKEN=ghp_你的Token
-GITHUB_OWNER=你的GitHub帳號
+GITHUB_OWNER=你的GitHub帳號 (請填 Username，勿填 Email)
 GITHUB_REPO=你的Repo名稱 (例如 immersive-viewer-antigrovity)
 GITHUB_PATH=public/library  # 圖片存放路徑 (預設建議)
 ```
