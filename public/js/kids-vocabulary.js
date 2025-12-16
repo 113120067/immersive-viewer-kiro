@@ -354,9 +354,13 @@ class KidsVocabularyGenerator {
   /**
    * 生成適合小朋友的 Prompt
    */
+  /**
+   * 生成適合小朋友的 Prompt
+   */
   generateKidsPrompt(input) {
     const safeInput = input.replace(/[^\w\s.,!?'-]/gi, '');
-    return `cute cartoon illustration of ${safeInput}, simple vector art, vibrant colors, for children educational material, white background, high quality`;
+    // 加入強力的正向引導，並透過文字描述排除不適合內容
+    return `cute cartoon illustration of ${safeInput}, simple vector art, vibrant colors, for children educational material, white background, high quality, no guns, no blood, no violence, no nudity`;
   }
 
   /**
@@ -387,7 +391,10 @@ class KidsVocabularyGenerator {
     // 加入 seed 參數來確保輸出一致性，利用快取
     const seed = this.generateSeed(input);
 
-    return `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&model=flux&enhance=true&seed=${seed}`;
+    // 🔒 安全性更新：
+    // 1. safe=true: 啟用 API 層級的 NSFW 過濾
+    // 2. nologo=true: 移除可能的浮水印
+    return `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&model=flux&enhance=true&seed=${seed}&safe=true&nologo=true`;
   }
 
   showResult(data, input) {
